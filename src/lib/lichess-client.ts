@@ -90,6 +90,7 @@ export async function lichessFetch(path: string, init: RequestInit = {}) {
   if (!headers.has("Accept")) headers.set("Accept", "application/json");
   const response = await fetch(LICHESS + path, { ...init, headers, cache: "no-store" });
   if (!response.ok) {
+    if (response.status === 401 && typeof window !== "undefined") sessionStorage.removeItem(TOKEN_KEY);
     const detail = await response.text().catch(() => "");
     throw new Error(detail || "Lichess-Anfrage fehlgeschlagen (" + response.status + ").");
   }
