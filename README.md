@@ -46,7 +46,7 @@ The callback URL is `{APP_URL}/api/auth/lichess/callback`.
 
 ## Not yet implemented
 
-Matchmaking, direct challenges, live game streams, board UI, move submission, clocks, chat, puzzles, analysis, opening explorer, tournaments, and game history are not implemented yet. The UI does not simulate these features.
+Direct challenges, native live game board, move submission, clocks, chat, puzzles, analysis, opening explorer, tournaments, and game history are not implemented yet. Matchmaking is wired to the official seek and account-event streams, but has not yet been verified end-to-end against a deployed OAuth app. The UI does not simulate these features.
 
 ## Important Lichess API constraint
 
