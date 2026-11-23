@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type Perf = { rating?: number; games?: number; rd?: number; prog?: number };
 type Account = {
@@ -31,7 +31,7 @@ export default function Home() {
   const [error, setError] = useState("");
   const [authStatus, setAuthStatus] = useState<string | null>(null);
 
-  async function loadAccount() {
+  const loadAccount = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch("/api/account", { cache: "no-store" });
@@ -48,12 +48,12 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
     void loadAccount();
     setAuthStatus(new URLSearchParams(window.location.search).get("auth"));
-  }, []);
+  }, [loadAccount]);
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
