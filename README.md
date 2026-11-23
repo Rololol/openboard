@@ -6,7 +6,7 @@ Openboard is an independent, mobile-first Lichess client with a chess-club inter
 
 The site is built as a static Next.js export and deployed by GitHub Actions. No Render, Vercel, or other application host is used.
 
-After the workflow completes, the site is available at:
+After the GitHub Pages deployment workflow succeeds, the site is available at:
 
 `https://rololol.github.io/openboard/`
 
