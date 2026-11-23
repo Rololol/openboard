@@ -32,7 +32,7 @@ export default function Home() {
     <aside className="sidebar">
       <a className="brand" href={appPath("/")}><span className="brand-mark">O</span><span className="brand-name">openboard</span></a>
       <div className="nav-wrap"><div className="nav-label">SPIELZENTRALE</div>
-        <nav className="nav">{navigation.map(([icon,label,active]) => <a href={active ? "/play" : "#"} className={active ? "active" : ""} key={label} aria-current={active ? "page" : undefined}><span className="nav-icon">{icon}</span><span className="nav-text">{label}</span></a>)}</nav>
+        <nav className="nav">{navigation.map(([icon,label,active]) => <a href={active ? appPath("/play") : "#"} className={active ? "active" : ""} key={label} aria-current={active ? "page" : undefined}><span className="nav-icon">{icon}</span><span className="nav-text">{label}</span></a>)}</nav>
         <div className="nav-label nav-label-secondary">MEHR</div>
         <nav className="nav nav-secondary"><a href="#"><span className="nav-icon">♜</span><span className="nav-text">Turniere</span></a><a href="#"><span className="nav-icon">♧</span><span className="nav-text">Freunde</span></a></nav>
       </div>
