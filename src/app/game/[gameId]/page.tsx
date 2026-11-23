@@ -1,7 +1,7 @@
 "use client";
 
 import { Chess, type Square } from "chess.js";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useParams } from "next/navigation";
 
 type Player = { id?: string; name?: string; rating?: number; title?: string };
@@ -170,7 +170,7 @@ export default function GamePage() {
     else setSelected(null);
   }
 
-  async function sendChat(event: React.FormEvent<HTMLFormElement>) {
+  async function sendChat(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const text = chatText.trim();
     if (!text || busy) return;
