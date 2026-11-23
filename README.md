@@ -39,6 +39,7 @@ The callback URL is `{APP_URL}/api/auth/lichess/callback`.
 - Responsive chess-club dashboard and navigation shell
 - Mobile-first matchmaking page with rated/casual selection and Rapid/Classical time controls
 - Authenticated Lichess Board API seek proxy and live account event stream proxy
+- Native live chessboard with legal move selection, promotion choice, SAN move list, player clocks, and resignation
 - Lichess OAuth 2.0 Authorization Code + PKCE start/callback flow
 - State validation and encrypted server-side session cookie
 - Authenticated account proxy and profile/rating display
@@ -46,7 +47,7 @@ The callback URL is `{APP_URL}/api/auth/lichess/callback`.
 
 ## Not yet implemented
 
-Direct challenges, native live game board, move submission, clocks, chat, puzzles, analysis, opening explorer, tournaments, and game history are not implemented yet. Matchmaking is wired to the official seek and account-event streams, but has not yet been verified end-to-end against a deployed OAuth app. The UI does not simulate these features.
+Direct challenges, chat, puzzles, analysis, opening explorer, tournaments, and game history are not implemented yet. Matchmaking is wired to the official seek and account-event streams, but has not yet been verified end-to-end against a deployed OAuth app. The UI does not simulate these features.
 
 ## Important Lichess API constraint
 
