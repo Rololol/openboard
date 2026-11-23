@@ -10,7 +10,7 @@ export async function POST(_request: NextRequest, context: Context) {
   if (!/^[a-zA-Z0-9]{8}$/.test(gameId)) {
     return NextResponse.json({ error: "Ungültige Partie-ID." }, { status: 400 });
   }
-  if (!["yes", "no", "accept"].includes(action)) {
+  if (!["yes", "no"].includes(action)) {
     return NextResponse.json({ error: "Ungültige Remis-Aktion." }, { status: 400 });
   }
 
