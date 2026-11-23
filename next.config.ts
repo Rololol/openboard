@@ -6,7 +6,6 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   output: "export",
   basePath: isGitHubPages ? "/openboard" : "",
-  assetPrefix: isGitHubPages ? "/openboard/" : undefined,
   trailingSlash: true,
   images: { unoptimized: true },
 };
