@@ -5,7 +5,7 @@ import { getSession } from "@/lib/session";
 export const runtime = "nodejs";
 
 export async function GET() {
-  const clientId = process.env.LICHESS_CLIENT_ID || "openboard";
+  const clientId = process.env.LICHESS_CLIENT_ID || "openboard-rololol";
   const appUrl = process.env.APP_URL;
   if (!appUrl) {
     return NextResponse.json({ error: "APP_URL ist nicht konfiguriert." }, { status: 500 });
