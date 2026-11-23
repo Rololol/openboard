@@ -2,7 +2,7 @@
 
 import { Chess, type Square } from "chess.js";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { useParams } from "next/navigation";
+import { appPath, getAccessToken, lichessFetch, lichessJson } from "@/lib/lichess-client";
 
 type Player = { id?: string; name?: string; rating?: number; title?: string };
 type GameFull = { id: string; white: Player; black: Player; initialFen?: string; clock?: { initial: number; increment: number }; state: { moves: string; wtime: number; btime: number; status: string; wdraw?: boolean; bdraw?: boolean } };
@@ -41,8 +41,7 @@ function getNotation(initialFen: string | undefined, moves: string) {
 }
 
 export default function GamePage() {
-  const params = useParams<{ gameId: string }>();
-  const gameId = params.gameId;
+  const [gameId, setGameId] = useState("");
   const [orientation, setOrientation] = useState<"white" | "black">("white");
   const [full, setFull] = useState<GameFull | null>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -68,10 +67,11 @@ export default function GamePage() {
   const notation = useMemo(() => getNotation(full?.initialFen, gameState?.moves ?? ""), [full?.initialFen, gameState?.moves]);
 
   const consumeStream = useCallback(async () => {
+    if (!gameId) return;
     const controller = new AbortController();
     streamRef.current = controller;
     try {
-      const response = await fetch("/api/lichess/game/" + gameId + "/stream", { cache: "no-store", signal: controller.signal });
+      const response = await lichessFetch("/api/board/game/stream/" + gameId, { signal: controller.signal });
       if (!response.ok || !response.body) {
         const payload = await response.json().catch(() => ({}));
         throw new Error(payload.error || "Partiestream nicht verfügbar.");
@@ -120,14 +120,15 @@ export default function GamePage() {
   }, [gameId]);
 
   useEffect(() => {
-    setOrientation(new URLSearchParams(window.location.search).get("color") === "black" ? "black" : "white");
+    const params = new URLSearchParams(window.location.search);
+    setGameId(params.get("gameId") || "");
+    setOrientation(params.get("color") === "black" ? "black" : "white");
     const controller = new AbortController();
-    void fetch("/api/lichess/game/" + gameId + "/chat", { cache: "no-store", signal: controller.signal })
-      .then(async (response) => response.ok ? response.json() : [])
-      .then((items) => {
-        if (Array.isArray(items)) setChat(items.filter((item) => item && typeof item.text === "string").map((item) => ({ username: String(item.user || "Spieler"), text: String(item.text || "") })).slice(-50));
-      })
-      .catch(() => undefined);
+    if (params.get("gameId") && getAccessToken()) {
+      void lichessJson<{ user?: string; text?: string }[]>("/api/board/game/" + params.get("gameId") + "/chat")
+        .then((items) => setChat(items.filter((item) => item && typeof item.text === "string").map((item) => ({ username: String(item.user || "Spieler"), text: String(item.text || "") })).slice(-50)))
+        .catch(() => undefined);
+    }
     const timer = window.setInterval(() => setClockTick((tick) => tick + 1), 250);
     return () => {
       controller.abort();
