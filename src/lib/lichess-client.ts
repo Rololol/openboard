@@ -87,7 +87,7 @@ export async function lichessFetch(path: string, init: RequestInit = {}) {
   if (!token) throw new Error("Bitte zuerst mit Lichess verbinden.");
   const headers = new Headers(init.headers);
   headers.set("Authorization", "Bearer " + token);
-  if (!headers.has("Accept")) headers.set("Accept", "application/json");
+  if (!headers.has("Accept")) headers.set("Accept", path.includes("/stream/") || path === "/api/stream/event" || path === "/api/board/seek" ? "application/x-ndjson" : "application/json");
   const response = await fetch(LICHESS + path, { ...init, headers, cache: "no-store" });
   if (!response.ok) {
     if (response.status === 401 && typeof window !== "undefined") sessionStorage.removeItem(TOKEN_KEY);
