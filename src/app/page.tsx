@@ -1,18 +1,64 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+type Perf = { rating?: number; games?: number; rd?: number; prog?: number };
+type Account = {
+  id: string;
+  username: string;
+  title?: string;
+  online?: boolean;
+  perfs?: Record<string, Perf>;
+  count?: { all?: number; win?: number; draw?: number; loss?: number };
+  profile?: { country?: string; bio?: string; location?: string };
+};
+type AccountResponse = { authenticated: boolean; account?: Account };
+
 const navigation = [
-  ["♟", "Spielen", true],
-  ["◷", "Täglich", false],
-  ["▣", "Schach lernen", false],
-  ["⌁", "Taktiktraining", false],
-  ["⌕", "Analyse", false],
-  ["⌘", "Eröffnungen", false],
-  ["♜", "Turniere", false],
-  ["▤", "Ranglisten", false],
-  ["♧", "Freunde", false],
-  ["◉", "Profil", false],
-  ["⚙", "Einstellungen", false],
+  ["♟", "Spielen", true], ["◷", "Täglich", false], ["▣", "Schach lernen", false],
+  ["⌁", "Taktiktraining", false], ["⌕", "Analyse", false], ["⌘", "Eröffnungen", false],
+  ["♜", "Turniere", false], ["▤", "Ranglisten", false], ["♧", "Freunde", false],
+  ["◉", "Profil", false], ["⚙", "Einstellungen", false],
+] as const;
+
+const ratingKeys = [
+  ["Blitz", "blitz"], ["Bullet", "bullet"], ["Rapid", "rapid"], ["Klassisch", "classical"],
 ] as const;
 
 export default function Home() {
+  const [account, setAccount] = useState<Account | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  async function loadAccount() {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/account", { cache: "no-store" });
+      if (response.status === 401) {
+        setAccount(null);
+        return;
+      }
+      if (!response.ok) throw new Error("Das Lichess-Profil konnte nicht geladen werden.");
+      const data = (await response.json()) as AccountResponse;
+      setAccount(data.account ?? null);
+      setError("");
+    } catch {
+      setError("Verbindung zu Lichess fehlgeschlagen. Bitte erneut versuchen.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { void loadAccount(); }, []);
+
+  async function logout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    setAccount(null);
+  }
+
+  const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+  const authStatus = params?.get("auth");
+
   return (
     <div className="shell">
       <aside className="sidebar">
@@ -34,49 +80,54 @@ export default function Home() {
         <header className="topbar">
           <div>
             <div className="eyebrow">Dein Schach-Hub</div>
-            <h1>Guten Abend.</h1>
+            <h1>{account ? `Willkommen, ${account.username}.` : "Guten Abend."}</h1>
             <div className="subtitle">Bereit für deine nächste Partie?</div>
           </div>
-          <div className="avatar" title="Noch nicht angemeldet">?</div>
+          {account ? <div className="avatar" title={account.username}>{account.username.slice(0,1).toUpperCase()}</div> : <div className="avatar">?</div>}
         </header>
+
+        {authStatus === "success" && <div className="notice success">Lichess-Konto erfolgreich verbunden.</div>}
+        {authStatus && authStatus !== "success" && <div className="notice error">Anmeldung fehlgeschlagen ({authStatus}). Bitte erneut versuchen.</div>}
+        {error && <div className="notice error">{error}</div>}
 
         <div className="grid-main">
           <section className="card hero">
             <div>
-              <span className="pill">LICHESS INTEGRATION IN VORBEREITUNG</span>
-              <h2>Dein nächster Zug beginnt hier.</h2>
-              <p>Ein klarer, moderner Ort für deine Partien, Analysen und deinen Fortschritt. Verbinde dein Lichess-Konto, um loszulegen.</p>
+              <span className="pill">{account ? "LICHESS VERBUNDEN" : "ECHTE PARTIEN ÜBER LICHESS"}</span>
+              <h2>{account ? "Bereit für deine nächste Partie?" : "Dein nächster Zug beginnt hier."}</h2>
+              <p>{account ? "Dein Konto ist verbunden. Die Spielsuche und Live-Partien werden als Nächstes integriert." : "Verbinde dein Lichess-Konto, um deine Wertungen und deine Schachaktivität in Openboard zu sehen."}</p>
             </div>
             <div className="actions">
-              <button className="btn" disabled title="OAuth wird im nächsten Entwicklungsschritt eingerichtet">Mit Lichess verbinden</button>
-              <button className="btn secondary" disabled>Als Gast ansehen</button>
+              {account ? <><a className="btn" href="https://lichess.org/">Auf Lichess spielen</a><button className="btn secondary" onClick={logout}>Abmelden</button></> :
+                <a className="btn" href="/api/auth/lichess/start">Mit Lichess verbinden</a>}
             </div>
           </section>
 
           <section className="card">
             <div className="eyebrow">Dein Bereich</div>
-            <h2 style={{marginTop:10}}>Alles an einem Ort</h2>
-            <p>Dein Lichess-Profil, deine Wertungen und deine letzten Partien erscheinen hier nach der Anmeldung.</p>
+            <h2 style={{marginTop:10}}>{account ? "Deine Wertungen" : "Dein Lichess-Profil"}</h2>
+            <p>{account ? "Aktuelle Wertungen aus deinem Lichess-Konto." : "Nach der Anmeldung werden deine offiziellen Lichess-Daten angezeigt."}</p>
             <div style={{marginTop:24}}>
-              <div className="activity"><strong>Blitz</strong><span>—</span></div>
-              <div className="activity"><strong>Bullet</strong><span>—</span></div>
-              <div className="activity"><strong>Rapid</strong><span>—</span></div>
-              <div className="activity"><strong>Klassisch</strong><span>—</span></div>
+              {ratingKeys.map(([label, key]) => <div className="activity" key={key}><strong>{label}</strong><span>{loading ? "…" : account?.perfs?.[key]?.rating ?? "—"}</span></div>)}
             </div>
           </section>
         </div>
 
         <div className="stat-grid">
-          {["Partien","Siege","Remis","Niederlagen"].map((label) => (
-            <div className="stat" key={label}><span>{label}</span><strong>—</strong></div>
-          ))}
+          {[
+            ["Partien", account?.count?.all], ["Siege", account?.count?.win],
+            ["Remis", account?.count?.draw], ["Niederlagen", account?.count?.loss],
+          ].map(([label, value]) => <div className="stat" key={label as string}><span>{label}</span><strong>{loading ? "…" : value ?? "—"}</strong></div>)}
         </div>
 
-        <div className="section-head"><h2>Deine letzten Aktivitäten</h2><span className="pill">WIRD VERKNÜPFT</span></div>
+        <div className="section-head"><h2>Dein Lichess-Konto</h2><span className="pill">{account ? "VERBUNDEN" : "NICHT VERBUNDEN"}</span></div>
         <section className="card">
-          <div className="activity"><strong>Spielhistorie</strong><span>Nach Lichess-Login verfügbar</span></div>
-          <div className="activity"><strong>Deine Statistiken</strong><span>Nach Lichess-Login verfügbar</span></div>
-          <div className="activity"><strong>Freunde & Herausforderungen</strong><span>Nach Lichess-Login verfügbar</span></div>
+          {account ? <>
+            <div className="activity"><strong>Benutzername</strong><span>{account.username}{account.title ? ` · ${account.title}` : ""}</span></div>
+            <div className="activity"><strong>Status</strong><span>{account.online ? "Online" : "Nicht online"}</span></div>
+            <div className="activity"><strong>Land</strong><span>{account.profile?.country ?? "Nicht angegeben"}</span></div>
+            <div className="activity"><strong>Blitz-Partien</strong><span>{account.perfs?.blitz?.games ?? "—"}</span></div>
+          </> : <div className="activity"><strong>{loading ? "Verbindung wird geprüft …" : "Noch nicht angemeldet"}</strong><span>{loading ? "" : "Verbinde dein Lichess-Konto, um fortzufahren."}</span></div>}
         </section>
       </main>
     </div>
