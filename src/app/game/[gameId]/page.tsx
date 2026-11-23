@@ -1,0 +1,199 @@
+"use client";
+
+import { Chess, type Square } from "chess.js";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
+
+type Player = { id?: string; name?: string; rating?: number; title?: string };
+type GameFull = { id: string; white: Player; black: Player; initialFen?: string; clock?: { initial: number; increment: number }; state: { moves: string; wtime: number; btime: number; status: string; wdraw?: boolean; bdraw?: boolean } };
+type GameState = { moves: string; wtime: number; btime: number; status: string; wdraw?: boolean; bdraw?: boolean };
+
+const glyphs: Record<string,string> = {
+  wk:"♔", wq:"♕", wr:"♖", wb:"♗", wn:"♘", wp:"♙",
+  bk:"♚", bq:"♛", br:"♜", bb:"♝", bn:"♞", bp:"♟",
+};
+
+function makeFen(initialFen: string | undefined, moves: string) {
+  const chess = new Chess(initialFen && initialFen !== "startpos" ? initialFen : undefined);
+  for (const uci of moves.trim().split(/\s+/).filter(Boolean)) {
+    try { chess.move({ from: uci.slice(0,2), to: uci.slice(2,4), promotion: uci[4] || "q" }); }
+    catch { break; }
+  }
+  return chess.fen();
+}
+
+function formatClock(ms: number) {
+  const seconds = Math.max(0, Math.floor(ms / 1000));
+  return Math.floor(seconds / 60) + ":" + String(seconds % 60).padStart(2,"0");
+}
+
+export default function GamePage() {
+  const params = useParams<{ gameId: string }>();
+  const search = useSearchParams();
+  const gameId = params.gameId;
+  const orientation = search.get("color") === "black" ? "black" : "white";
+  const [full, setFull] = useState<GameFull | null>(null);
+  const [gameState, setGameState] = useState<GameState | null>(null);
+  const [fen, setFen] = useState(new Chess().fen());
+  const [selected, setSelected] = useState<Square | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("Verbinde mit der Partie …");
+  const [pendingPromotion, setPendingPromotion] = useState<{from:Square;to:Square}|null>(null);
+  const streamRef = useRef<AbortController | null>(null);
+
+  const chess = useMemo(() => new Chess(fen), [fen]);
+  const destinations = useMemo(() => {
+    if (!selected) return [];
+    return chess.moves({ square: selected, verbose: true }).map(move => move.to);
+  }, [chess, selected]);
+
+  const consumeStream = useCallback(async () => {
+    const controller = new AbortController();
+    streamRef.current = controller;
+    try {
+      const response = await fetch("/api/lichess/game/" + gameId + "/stream", { cache: "no-store", signal: controller.signal });
+      if (!response.ok || !response.body) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "Partiestream nicht verfügbar.");
+      }
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      while (!controller.signal.aborted) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const event = JSON.parse(line);
+            if (event.type === "gameFull") {
+              const next = event as GameFull;
+              setFull(next);
+              setGameState(next.state);
+              setFen(makeFen(next.initialFen, next.state.moves));
+              setMessage(next.state.status === "started" ? "Partie läuft" : "Partie beendet");
+            } else if (event.type === "gameState") {
+              const next = event as GameState;
+              setGameState(next);
+              setFen((current) => makeFen(full?.initialFen, next.moves));
+              setMessage(next.status === "started" ? "Partie läuft" : "Partie beendet");
+            } else if (event.type === "chatLine") {
+              // Chat will be added separately.
+            }
+          } catch {
+            // Ignore malformed stream events; the next valid state remains authoritative.
+          }
+        }
+      }
+    } catch (cause) {
+      if (cause instanceof Error && cause.name !== "AbortError") {
+        setError(cause.message);
+        setMessage("Verbindung unterbrochen");
+      }
+    }
+  }, [gameId, full?.initialFen]);
+
+  useEffect(() => {
+    void consumeStream();
+    return () => streamRef.current?.abort();
+  }, [consumeStream]);
+
+  async function sendMove(from: Square, to: Square, promotion?: string) {
+    const current = new Chess(fen);
+    const legal = current.moves({ square: from, verbose: true }).find(move => move.to === to);
+    if (!legal) { setSelected(null); return; }
+    const chosenPromotion = promotion || (legal.promotion ? "q" : undefined);
+    const uci = from + to + (chosenPromotion || "");
+    setBusy(true);
+    setError("");
+    setSelected(null);
+    try {
+      const response = await fetch("/api/lichess/game/" + gameId + "/move", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ uci }),
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "Zug konnte nicht gesendet werden.");
+      }
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Zug fehlgeschlagen.");
+    } finally { setBusy(false); }
+  }
+
+  async function chooseSquare(square: Square) {
+    if (!full || !gameState || gameState.status !== "started" || busy) return;
+    const ownTurn = (orientation === "white" && chess.turn() === "w") || (orientation === "black" && chess.turn() === "b");
+    if (!ownTurn) return;
+    const piece = chess.get(square);
+    const ownPiece = piece && piece.color === (orientation === "white" ? "w" : "b");
+    if (!selected) {
+      if (ownPiece) setSelected(square);
+      return;
+    }
+    if (selected === square) { setSelected(null); return; }
+    const move = chess.moves({ square: selected, verbose: true }).find(item => item.to === square);
+    if (move?.promotion) setPendingPromotion({ from: selected, to: square });
+    else if (move) await sendMove(selected, square);
+    else if (ownPiece) setSelected(square);
+    else setSelected(null);
+  }
+
+  async function resign() {
+    if (!window.confirm("Möchtest du diese Partie wirklich aufgeben?")) return;
+    setBusy(true);
+    try {
+      const response = await fetch("/api/lichess/game/" + gameId + "/resign", { method: "POST" });
+      if (!response.ok) throw new Error("Aufgeben fehlgeschlagen.");
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Aktion fehlgeschlagen."); }
+    finally { setBusy(false); }
+  }
+
+  const rows = orientation === "white" ? [8,7,6,5,4,3,2,1] : [1,2,3,4,5,6,7,8];
+  const cols = orientation === "white" ? ["a","b","c","d","e","f","g","h"] : ["h","g","f","e","d","c","b","a"];
+  const player = orientation === "white" ? full?.white : full?.black;
+  const opponent = orientation === "white" ? full?.black : full?.white;
+  const playerTime = orientation === "white" ? gameState?.wtime : gameState?.btime;
+  const opponentTime = orientation === "white" ? gameState?.btime : gameState?.wtime;
+  const isYourTurn = gameState?.status === "started" && ((orientation === "white" && chess.turn() === "w") || (orientation === "black" && chess.turn() === "b"));
+
+  return <div className="game-page">
+    <header className="game-topbar"><a href="/play">← Spielsuche</a><span>OPENBOARD <i/> LIVE-PARTIE</span><a href="/">Dashboard</a></header>
+    <main className="game-layout">
+      <section className="board-column">
+        <div className="player-bar opponent-bar"><span className="player-avatar">{opponent?.name?.slice(0,1).toUpperCase() || "?"}</span><div><strong>{opponent?.name || "Gegner"}</strong><small>{opponent?.rating ? opponent.rating + " Elo" : "Lichess-Spieler"}</small></div><strong className="clock">{formatClock(opponentTime ?? 0)}</strong></div>
+        <div className="live-board" aria-label="Schachbrett">
+          {rows.map(rank => cols.map(file => {
+            const square = (file + rank) as Square;
+            const piece = chess.get(square);
+            const selectedHere = selected === square;
+            const legal = destinations.includes(square);
+            const lastMove = gameState?.moves?.trim().split(/\s+/).slice(-1)[0];
+            const lastSquare = lastMove && (lastMove.slice(0,2) === square || lastMove.slice(2,4) === square);
+            const check = piece?.type === "k" && piece.color === chess.turn() && chess.isCheck();
+            return <button key={square} className={["board-square",((file.charCodeAt(0)-97+rank)%2===0)?"dark":"light",selectedHere?"selected":"",legal?"legal":"",lastSquare?"last-move":"",check?"in-check":""].filter(Boolean).join(" ")} onClick={() => void chooseSquare(square)} disabled={!full || busy || gameState?.status !== "started"}>
+              {piece && <span className={"piece " + (piece.color === "w" ? "white-piece" : "black-piece")}>{glyphs[piece.color + piece.type]}</span>}
+              {legal && !piece && <span className="move-dot"/>}
+              {legal && piece && <span className="capture-ring"/>}
+              {file === (orientation === "white" ? "a" : "h") && <small className="rank-label">{rank}</small>}
+              {rank === (orientation === "white" ? 1 : 8) && <small className="file-label">{file}</small>}
+            </button>;
+          }))}
+        </div>
+        <div className="player-bar own-bar"><span className="player-avatar own-avatar">{player?.name?.slice(0,1).toUpperCase() || "?"}</span><div><strong>{player?.name || "Du"}</strong><small>{player?.rating ? player.rating + " Elo" : "Du spielst " + orientation}</small></div><strong className={"clock " + (isYourTurn ? "active-clock" : "")}>{formatClock(playerTime ?? 0)}</strong></div>
+      </section>
+      <aside className="game-sidebar">
+        <div className="game-status"><span className={"status-dot " + (gameState?.status === "started" ? "pulsing" : "")}/><strong>{gameState?.status === "started" ? (isYourTurn ? "Du bist am Zug" : "Gegner am Zug") : gameState ? "Partie beendet" : message}</strong></div>
+        <div className="move-list"><div className="eyebrow">PARTIE</div><div className="move-empty">{gameState?.moves ? gameState.moves.split(" ").length + " Halbzüge gespielt" : "Die Züge erscheinen hier, sobald sie gespielt werden."}</div></div>
+        {error && <div className="game-error">{error}</div>}
+        <button className="resign-button" onClick={resign} disabled={busy || gameState?.status !== "started"}>Partie aufgeben</button>
+        <a className="lichess-link" href={"https://lichess.org/" + gameId} target="_blank" rel="noreferrer">Auf Lichess ansehen ↗</a>
+        <small className="fair-play">Keine Engine-Hilfe während einer laufenden Partie. Lichess-Fair-Play-Regeln gelten.</small>
+      </aside>
+    </main>
+    {pendingPromotion && <div className="promotion-backdrop"><div className="promotion-dialog"><strong>Umwandlung wählen</strong><div>{["q","r","b","n"].map(type => <button key={type} onClick={() => { void sendMove(pendingPromotion.from,pendingPromotion.to,type); setPendingPromotion(null); }}>{glyphs[(orientation === "white" ? "w" : "b") + type]}</button>)}</div><button className="promotion-cancel" onClick={() => setPendingPromotion(null)}>Abbrechen</button></div></div>}
+  </div>;
+}
