@@ -20,7 +20,7 @@ The access token is held in the browser's `sessionStorage` and sent directly to 
 
 The OAuth redirect URI is:
 
-`https://rololol.github.io/openboard/auth/callback`
+`https://rololol.github.io/openboard/auth/callback/`
 
 ## Implemented
 
