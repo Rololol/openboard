@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { appPath, getAccessToken, lichessFetch } from "@/lib/lichess-client";
 
 type TimeOption = { label: string; time: number; increment: number; detail: string };
 const timeOptions: TimeOption[] = [
@@ -29,6 +30,11 @@ export default function PlayPage() {
     if (!option || searching) return;
     setError("");
     setGameId("");
+    if (!getAccessToken()) {
+      setError("Bitte zuerst auf der Startseite mit Lichess verbinden.");
+      setSearching(false);
+      return;
+    }
     setSearching(true);
     setStatus("Verbinde den Lichess-Ereignisstream …");
 
@@ -38,7 +44,7 @@ export default function PlayPage() {
     seekController.current = seek;
 
     try {
-      const eventResponse = await fetch("/api/lichess/events", { signal: events.signal, cache: "no-store" });
+      const eventResponse = await lichessFetch("/api/stream/event", { signal: events.signal });
       if (!eventResponse.ok || !eventResponse.body) {
         const payload = await eventResponse.json().catch(() => ({}));
         throw new Error(payload.error || "Der Ereignisstream konnte nicht geöffnet werden.");
@@ -66,7 +72,7 @@ export default function PlayPage() {
                   setSearching(false);
                   seekController.current?.abort();
                   eventController.current?.abort();
-                  window.location.assign("/game/" + event.game.id + "?color=" + color);
+                  window.location.assign(appPath("/game") + "?gameId=" + event.game.id + "&color=" + color);
                   return;
                 }
                 if (event.type === "challenge") setStatus("Eine Herausforderung ist eingegangen.");
@@ -78,10 +84,16 @@ export default function PlayPage() {
       void listen();
 
       setStatus("Suche nach einem Gegner …");
-      const seekResponse = await fetch("/api/lichess/seek", {
+      const seekResponse = await lichessFetch("/api/board/seek", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ time: option.time, increment: option.increment, rated }),
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          time: String(option.time),
+          increment: String(option.increment),
+          rated: String(rated),
+          variant: "standard",
+          color: "random",
+        }),
         signal: seek.signal,
       });
       if (!seekResponse.ok) {
@@ -118,7 +130,7 @@ export default function PlayPage() {
   const currentOption = timeOptions.find((item) => item.label === selected);
 
   return <div className="play-page">
-    <header className="play-header"><a href="/" className="back-link">← Openboard</a><span className="eyebrow">LICHESS MATCHMAKING</span></header>
+    <header className="play-header"><a href={appPath("/")} className="back-link">← Openboard</a><span className="eyebrow">LICHESS MATCHMAKING</span></header>
     <main className="play-content">
       <div className="eyebrow">SPIELEN</div>
       <h1>Finde deinen Gegner.</h1>
@@ -135,7 +147,7 @@ export default function PlayPage() {
         <div className="match-summary"><span>Standard · Zufällige Farbe</span><span>{currentOption?.detail ?? "Rapid"}</span></div>
         {!searching ? <button className="find-button" onClick={startSearch}>Gegner suchen <span>→</span></button> : <button className="find-button cancel" onClick={cancelSearch}>Suche abbrechen</button>}
         <div className={error ? "search-status error" : "search-status"}><span className={searching ? "status-dot pulsing" : "status-dot"}/>{error || status}</div>
-        {gameId && <div className="found-game"><strong>Partie gefunden</strong><code>{gameId}</code><a href={"https://lichess.org/" + gameId} target="_blank" rel="noreferrer">Partie auf Lichess öffnen ↗</a><small>Die native Openboard-Spielansicht wird im nächsten Entwicklungsschritt ergänzt.</small></div>}
+        {gameId && <div className="found-game"><strong>Partie gefunden</strong><code>{gameId}</code><a href={"https://lichess.org/" + gameId} target="_blank" rel="noreferrer">Partie auf Lichess öffnen ↗</a><small>Die Partie läuft live über Lichess und wird in Openboard angezeigt.</small></div>}
       </section>
 
       <aside className="api-note"><strong>Warum nur Rapid und Klassisch?</strong><p>Lichess erlaubt die öffentliche Zufallssuche über die Board API für Rapid, Klassisch und Fernschach. Normale Blitz- und Bullet-Zufallssuche ist darüber nicht verfügbar. Openboard zeigt deshalb keine nicht unterstützten Modi an.</p></aside>
