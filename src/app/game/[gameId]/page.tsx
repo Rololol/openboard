@@ -48,6 +48,7 @@ export default function GamePage() {
   const [fen, setFen] = useState(new Chess().fen());
   const [selected, setSelected] = useState<Square | null>(null);
   const [busy, setBusy] = useState(false);
+  const [actionMessage, setActionMessage] = useState("");
   const [clockTick, setClockTick] = useState(0);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("Verbinde mit der Partie …");
@@ -166,6 +167,22 @@ export default function GamePage() {
     else setSelected(null);
   }
 
+  async function drawAction(action: "yes" | "no" | "accept") {
+    setBusy(true);
+    setError("");
+    setActionMessage("");
+    try {
+      const response = await fetch("/api/lichess/game/" + gameId + "/draw/" + action, { method: "POST" });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "Remis-Aktion fehlgeschlagen.");
+      }
+      setActionMessage(action === "yes" ? "Remis angeboten." : action === "no" ? "Remisangebot abgelehnt." : "Remis angenommen.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Remis-Aktion fehlgeschlagen.");
+    } finally { setBusy(false); }
+  }
+
   async function resign() {
     if (!window.confirm("Möchtest du diese Partie wirklich aufgeben?")) return;
     setBusy(true);
@@ -217,6 +234,9 @@ export default function GamePage() {
         <div className="game-status"><span className={"status-dot " + (gameState?.status === "started" ? "pulsing" : "")}/><strong>{gameState?.status === "started" ? (isYourTurn ? "Du bist am Zug" : "Gegner am Zug") : gameState ? "Partie beendet" : message}</strong></div>
         <div className="move-list"><div className="eyebrow">ZUGLISTE</div>{notation.length ? <div className="move-notation">{notation.map((move,index) => <span key={index}><b>{move.color === "white" ? move.number + "." : move.number + "…"}</b> {move.san}</span>)}</div> : <div className="move-empty">Die Züge erscheinen hier, sobald sie gespielt werden.</div>}</div>
         {error && <div className="game-error">{error}</div>}
+        {gameState?.status === "started" && (orientation === "white" ? gameState.bdraw : gameState.wdraw) ? <div className="draw-offer"><strong>Gegner bietet Remis an.</strong><div><button onClick={() => void drawAction("accept")} disabled={busy}>Annehmen</button><button onClick={() => void drawAction("no")} disabled={busy}>Ablehnen</button></div></div> : null}
+        {gameState?.status === "started" && !(orientation === "white" ? gameState.wdraw : gameState.bdraw) && !(orientation === "white" ? gameState.bdraw : gameState.wdraw) ? <button className="draw-button" onClick={() => void drawAction("yes")} disabled={busy}>Remis anbieten</button> : null}
+        {actionMessage && <div className="action-message">{actionMessage}</div>}
         <button className="resign-button" onClick={resign} disabled={busy || gameState?.status !== "started"}>Partie aufgeben</button>
         <a className="lichess-link" href={"https://lichess.org/" + gameId} target="_blank" rel="noreferrer">Auf Lichess ansehen ↗</a>
         <small className="fair-play">Keine Engine-Hilfe während einer laufenden Partie. Lichess-Fair-Play-Regeln gelten.</small>
