@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
 
   const tokenResponse = await fetch("https://lichess.org/api/token", {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
+    headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json", "User-Agent": "Openboard (https://github.com/Rololol/openboard)" },
     body,
     cache: "no-store",
   });
