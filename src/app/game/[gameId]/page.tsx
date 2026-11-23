@@ -180,12 +180,12 @@ export default function GamePage() {
   const cols = orientation === "white" ? ["a","b","c","d","e","f","g","h"] : ["h","g","f","e","d","c","b","a"];
   const player = orientation === "white" ? full?.white : full?.black;
   const opponent = orientation === "white" ? full?.black : full?.white;
+  const isYourTurn = gameState?.status === "started" && ((orientation === "white" && chess.turn() === "w") || (orientation === "black" && chess.turn() === "b"));
   const elapsed = gameState?.status === "started" ? Date.now() - clockAnchorRef.current : 0;
   const playerTimeBase = orientation === "white" ? gameState?.wtime : gameState?.btime;
   const opponentTimeBase = orientation === "white" ? gameState?.btime : gameState?.wtime;
   const playerTime = Math.max(0, (playerTimeBase ?? 0) - (isYourTurn ? elapsed : 0));
   const opponentTime = Math.max(0, (opponentTimeBase ?? 0) - (isYourTurn ? 0 : elapsed));
-  const isYourTurn = gameState?.status === "started" && ((orientation === "white" && chess.turn() === "w") || (orientation === "black" && chess.turn() === "b"));
   void clockTick;
 
   return <div className="game-page">
