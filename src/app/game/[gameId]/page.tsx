@@ -7,6 +7,7 @@ import { useParams } from "next/navigation";
 type Player = { id?: string; name?: string; rating?: number; title?: string };
 type GameFull = { id: string; white: Player; black: Player; initialFen?: string; clock?: { initial: number; increment: number }; state: { moves: string; wtime: number; btime: number; status: string; wdraw?: boolean; bdraw?: boolean } };
 type GameState = { moves: string; wtime: number; btime: number; status: string; wdraw?: boolean; bdraw?: boolean };
+type ChatMessage = { username: string; text: string };
 
 const glyphs: Record<string,string> = {
   wk:"♔", wq:"♕", wr:"♖", wb:"♗", wn:"♘", wp:"♙",
@@ -49,6 +50,8 @@ export default function GamePage() {
   const [selected, setSelected] = useState<Square | null>(null);
   const [busy, setBusy] = useState(false);
   const [actionMessage, setActionMessage] = useState("");
+  const [chat, setChat] = useState<ChatMessage[]>([]);
+  const [chatText, setChatText] = useState("");
   const [clockTick, setClockTick] = useState(0);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("Verbinde mit der Partie …");
@@ -100,8 +103,8 @@ export default function GamePage() {
               clockAnchorRef.current = Date.now();
               setFen(makeFen(initialFenRef.current, next.moves));
               setMessage(next.status === "started" ? "Partie läuft" : "Partie beendet");
-            } else if (event.type === "chatLine") {
-              // Chat will be added separately.
+            } else if (event.type === "chatLine" && event.room === "player") {
+              setChat((items) => [...items.slice(-49), { username: String(event.username || "Spieler"), text: String(event.text || "") }]);
             }
           } catch {
             // Ignore malformed stream events; the next valid state remains authoritative.
@@ -165,6 +168,28 @@ export default function GamePage() {
     else if (move) await sendMove(selected, square);
     else if (ownPiece) setSelected(square);
     else setSelected(null);
+  }
+
+  async function sendChat(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const text = chatText.trim();
+    if (!text || busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      const response = await fetch("/api/lichess/game/" + gameId + "/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "Nachricht konnte nicht gesendet werden.");
+      }
+      setChatText("");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Chat-Nachricht fehlgeschlagen.");
+    } finally { setBusy(false); }
   }
 
   async function drawAction(action: "yes" | "no" | "accept") {
@@ -233,6 +258,7 @@ export default function GamePage() {
       <aside className="game-sidebar">
         <div className="game-status"><span className={"status-dot " + (gameState?.status === "started" ? "pulsing" : "")}/><strong>{gameState?.status === "started" ? (isYourTurn ? "Du bist am Zug" : "Gegner am Zug") : gameState ? "Partie beendet" : message}</strong></div>
         <div className="move-list"><div className="eyebrow">ZUGLISTE</div>{notation.length ? <div className="move-notation">{notation.map((move,index) => <span key={index}><b>{move.color === "white" ? move.number + "." : move.number + "…"}</b> {move.san}</span>)}</div> : <div className="move-empty">Die Züge erscheinen hier, sobald sie gespielt werden.</div>}</div>
+        <section className="game-chat"><div className="eyebrow">PARTIE-CHAT</div><div className="chat-messages">{chat.length ? chat.map((item,index) => <p key={index}><strong>{item.username}</strong>{item.text}</p>) : <small>Chat-Nachrichten erscheinen hier.</small>}</div><form onSubmit={sendChat}><input aria-label="Chat-Nachricht" maxLength={200} value={chatText} onChange={(event) => setChatText(event.target.value)} placeholder="Nachricht schreiben …" disabled={gameState?.status !== "started" || busy}/><button type="submit" disabled={!chatText.trim() || busy || gameState?.status !== "started"}>Senden</button></form></section>
         {error && <div className="game-error">{error}</div>}
         {gameState?.status === "started" && (orientation === "white" ? gameState.bdraw : gameState.wdraw) ? <div className="draw-offer"><strong>Gegner bietet Remis an.</strong><div><button onClick={() => void drawAction("accept")} disabled={busy}>Annehmen</button><button onClick={() => void drawAction("no")} disabled={busy}>Ablehnen</button></div></div> : null}
         {gameState?.status === "started" && !(orientation === "white" ? gameState.wdraw : gameState.bdraw) && !(orientation === "white" ? gameState.bdraw : gameState.wdraw) ? <button className="draw-button" onClick={() => void drawAction("yes")} disabled={busy}>Remis anbieten</button> : null}
