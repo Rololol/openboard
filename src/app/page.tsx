@@ -33,7 +33,7 @@ export default function Home() {
     <aside className="sidebar">
       <a className="brand" href="/"><span className="brand-mark">O</span><span className="brand-name">openboard</span></a>
       <div className="nav-wrap"><div className="nav-label">SPIELZENTRALE</div>
-        <nav className="nav">{navigation.map(([icon,label,active]) => <a href={active ? "/" : "#"} className={active ? "active" : ""} key={label} aria-current={active ? "page" : undefined}><span className="nav-icon">{icon}</span><span className="nav-text">{label}</span></a>)}</nav>
+        <nav className="nav">{navigation.map(([icon,label,active]) => <a href={active ? "/play" : "#"} className={active ? "active" : ""} key={label} aria-current={active ? "page" : undefined}><span className="nav-icon">{icon}</span><span className="nav-text">{label}</span></a>)}</nav>
         <div className="nav-label nav-label-secondary">MEHR</div>
         <nav className="nav nav-secondary"><a href="#"><span className="nav-icon">♜</span><span className="nav-text">Turniere</span></a><a href="#"><span className="nav-icon">♧</span><span className="nav-text">Freunde</span></a></nav>
       </div>
@@ -48,8 +48,8 @@ export default function Home() {
       {error && <div className="notice error">{error}</div>}
       <section className="welcome-grid">
         <div className="play-panel"><div className="play-copy"><span className="pill"><span className="live-dot"/> LIVE AUF LICHESS</span><h2>Spiele Schach.<br/><em>Werde besser.</em></h2>
-          <p>{account ? "Dein Lichess-Konto ist verbunden. Die echte Spielsuche wird als nächster Schritt aktiviert." : "Verbinde dein Lichess-Konto und mach dich bereit für deine nächste Partie."}</p>
-          {account ? <a className="btn" href="https://lichess.org/">Auf Lichess spielen <span>→</span></a> : <a className="btn" href="/api/auth/lichess/start">Kostenlos verbinden <span>→</span></a>}
+          <p>{account ? "Dein Lichess-Konto ist verbunden. Starte eine echte Spielsuche direkt über Lichess." : "Verbinde dein Lichess-Konto und mach dich bereit für deine nächste Partie."}</p>
+          {account ? <a className="btn" href="/play">Partie suchen <span>→</span></a> : <a className="btn" href="/api/auth/lichess/start">Kostenlos verbinden <span>→</span></a>}
         </div><div className="board-preview" aria-label="Schachbrett-Vorschau">{pieces.map((piece,i) => <div className={(Math.floor(i/8)+i%8)%2===0 ? "square light" : "square dark"} key={i}>{piece}</div>)}</div></div>
         <div className="side-promos">
           <a className="promo puzzle-promo" href="#"><div className="promo-icon">♞</div><div><span className="promo-kicker">TAKTIKTRAINING</span><h3>Ein Zug voraus</h3><p>Trainiere dein Auge für Taktiken.</p></div><span className="promo-arrow">→</span></a>
