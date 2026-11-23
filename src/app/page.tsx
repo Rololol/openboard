@@ -8,7 +8,7 @@ type AccountResponse = { authenticated: boolean; account?: Account };
 
 const navigation = [["♟", "Spielen", true], ["◈", "Rätsel", false], ["▦", "Lernen", false], ["⌕", "Analyse", false], ["◉", "Profil", false]] as const;
 const ratingKeys = [["Blitz", "blitz"], ["Bullet", "bullet"], ["Rapid", "rapid"], ["Klassisch", "classical"]] as const;
-const pieces = ["♜","♞","♝","♛","♚","♝","♞","♜","♟","♟","♟","♟","♟","♟","♟","♟","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","♙","♙","♙","♙","♙","♙","♙","♙","♖","♘","♗","♕","♔","♗","♘","♖"];
+const pieces = ("♜♞♝♛♚♝♞♜" + "♟".repeat(8) + " ".repeat(32) + "♙".repeat(8) + "♖♘♗♕♔♗♘♖").split("");
 
 export default function Home() {
   const [account, setAccount] = useState<Account | null>(null);
