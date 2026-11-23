@@ -1,61 +1,57 @@
 # Openboard
 
-An independent, responsive Lichess client. Lichess remains the source of truth for accounts, ratings, matchmaking, games, tournaments, and history.
+Openboard is an independent, mobile-first Lichess client with a chess-club interface. Lichess remains the source of truth for accounts, ratings, matchmaking, game state, and chat.
 
-## Stack
+## GitHub Pages deployment
 
-- Next.js App Router + React + TypeScript
-- Tailwind CSS v4
-- iron-session for encrypted, HttpOnly cookie sessions
-- chessops for chess rules and position handling
-- Stockfish WASM for local analysis (planned)
-- Official Lichess HTTP and streaming APIs
+The site is built as a static Next.js export and deployed by GitHub Actions. No Render, Vercel, or other application host is used.
 
-## Development
+After the workflow completes, the site is available at:
+
+`https://rololol.github.io/openboard/`
+
+The repository must allow GitHub Actions to deploy Pages. The deployment workflow attempts to enable/configure Pages automatically; if repository settings prevent that, set **Settings → Pages → Build and deployment → Source → GitHub Actions** once.
+
+## Lichess login and token handling
+
+Openboard uses the browser-based OAuth 2.0 Authorization Code flow with PKCE, following the public-client approach used by the official Lichess API demo. No client secret or server is required.
+
+The access token is held in the browser's `sessionStorage` and sent directly to `https://lichess.org` over HTTPS. It is not committed to GitHub or sent to an Openboard server. Because this is a static website, the token is accessible to JavaScript running on the Openboard origin; keep the browser up to date and do not install untrusted browser extensions. Logging out also asks Lichess to revoke the token.
+
+The OAuth redirect URI is:
+
+`https://rololol.github.io/openboard/auth/callback`
+
+## Implemented
+
+- Responsive mobile-first dashboard with Lichess ratings and account activity
+- Lichess OAuth PKCE login and logout
+- Real Lichess Rapid/Classical random matchmaking
+- Live game board with legal move selection and promotion
+- Live player clocks and SAN move list
+- Player chat
+- Draw offers and responses
+- Takeback offers and responses
+- Resignation
+- GitHub Actions type-check, lint, static build, and GitHub Pages deployment
+
+## Lichess API constraints
+
+The Board API supports random seeks for Rapid, Classical, and Correspondence time controls. Ordinary random Blitz and Bullet seeks are not available through this API, so Openboard does not display unsupported matchmaking queues. Direct challenges are a separate feature and are not yet implemented.
+
+Engine assistance is forbidden by Lichess fair-play rules during live games. Openboard does not provide engine assistance during a live game.
+
+## Local development
 
 Requirements: Node.js 20.9+.
 
 ```bash
 npm install
-cp .env.example .env.local
-# Set SESSION_SECRET to a random value of at least 32 characters.
 npm run dev
 ```
 
-Open http://localhost:3000.
+The app can be tested locally at `http://localhost:3000`. Lichess OAuth will return to the local callback route.
 
-## Environment
+## Current limitations
 
-- `LICHESS_CLIENT_ID`: optional unique public OAuth client identifier (defaults to `openboard-rololol`)
-- `APP_URL`: application origin, including scheme (for local development: `http://localhost:3000`)
-- `SESSION_SECRET`: random secret of at least 32 characters; generate with `openssl rand -base64 48`
-
-Lichess supports the OAuth 2.0 authorization-code flow with PKCE for unregistered public clients. No client secret is required. The access token is stored in an encrypted, HttpOnly, SameSite=Lax cookie and is never returned to browser JavaScript. Lichess tokens are long-lived and do not use refresh tokens; users can revoke them from their Lichess account settings.
-
-The callback URL is `{APP_URL}/api/auth/lichess/callback`.
-
-## Implemented
-
-- Responsive chess-club dashboard and navigation shell
-- Mobile-first matchmaking page with rated/casual selection and Rapid/Classical time controls
-- Authenticated Lichess Board API seek proxy and live account event stream proxy
-- Native live chessboard with legal move selection, promotion choice, SAN move list, player clocks, draw offers, takebacks, in-game chat, and resignation
-- Lichess OAuth 2.0 Authorization Code + PKCE start/callback flow
-- State validation and encrypted server-side session cookie
-- Authenticated account proxy and profile/rating display
-- Logout
-
-## Not yet implemented
-
-Direct challenges, puzzles, analysis, opening explorer, tournaments, and game history are not implemented yet. Matchmaking is wired to the official seek and account-event streams, but has not yet been verified end-to-end against a deployed OAuth app. The UI does not simulate these features.
-
-## Important Lichess API constraint
-
-The official Board API supports random seeks for Rapid, Classical, and Correspondence time controls. Blitz is available for direct challenges and games against AI, but not for ordinary random seeks through the Board API. Openboard will expose only matchmaking options supported by Lichess rather than faking unsupported queues.
-
-## Roadmap
-
-1. OAuth and authenticated profile (implemented)
-2. Lichess Board API matchmaking (implemented)
-3. Direct challenges and reconnect handling
-4. Analysis, puzzles, opening explorer, tournaments, and statistics
+The current release focuses on login, matchmaking, and live games. Direct challenges, puzzles, learning lessons, analysis, opening explorer, tournaments, and game history are not implemented. The live-game integration has not yet been validated with two real Lichess accounts in a deployed environment.
