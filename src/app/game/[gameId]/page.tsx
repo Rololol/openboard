@@ -192,17 +192,18 @@ export default function GamePage() {
     } finally { setBusy(false); }
   }
 
-  async function drawAction(action: "yes" | "no" | "accept") {
+  async function drawAction(action: "offer" | "accept" | "decline") {
     setBusy(true);
     setError("");
     setActionMessage("");
     try {
-      const response = await fetch("/api/lichess/game/" + gameId + "/draw/" + action, { method: "POST" });
+      const apiAction = action === "decline" ? "no" : "yes";
+      const response = await fetch("/api/lichess/game/" + gameId + "/draw/" + apiAction, { method: "POST" });
       if (!response.ok) {
         const payload = await response.json().catch(() => ({}));
         throw new Error(payload.error || "Remis-Aktion fehlgeschlagen.");
       }
-      setActionMessage(action === "yes" ? "Remis angeboten." : action === "no" ? "Remisangebot abgelehnt." : "Remis angenommen.");
+      setActionMessage(action === "offer" ? "Remis angeboten." : action === "decline" ? "Remisangebot abgelehnt." : "Remis angenommen.");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Remis-Aktion fehlgeschlagen.");
     } finally { setBusy(false); }
@@ -260,8 +261,8 @@ export default function GamePage() {
         <div className="move-list"><div className="eyebrow">ZUGLISTE</div>{notation.length ? <div className="move-notation">{notation.map((move,index) => <span key={index}><b>{move.color === "white" ? move.number + "." : move.number + "…"}</b> {move.san}</span>)}</div> : <div className="move-empty">Die Züge erscheinen hier, sobald sie gespielt werden.</div>}</div>
         <section className="game-chat"><div className="eyebrow">PARTIE-CHAT</div><div className="chat-messages">{chat.length ? chat.map((item,index) => <p key={index}><strong>{item.username}</strong>{item.text}</p>) : <small>Chat-Nachrichten erscheinen hier.</small>}</div><form onSubmit={sendChat}><input aria-label="Chat-Nachricht" maxLength={200} value={chatText} onChange={(event) => setChatText(event.target.value)} placeholder="Nachricht schreiben …" disabled={gameState?.status !== "started" || busy}/><button type="submit" disabled={!chatText.trim() || busy || gameState?.status !== "started"}>Senden</button></form></section>
         {error && <div className="game-error">{error}</div>}
-        {gameState?.status === "started" && (orientation === "white" ? gameState.bdraw : gameState.wdraw) ? <div className="draw-offer"><strong>Gegner bietet Remis an.</strong><div><button onClick={() => void drawAction("accept")} disabled={busy}>Annehmen</button><button onClick={() => void drawAction("no")} disabled={busy}>Ablehnen</button></div></div> : null}
-        {gameState?.status === "started" && !(orientation === "white" ? gameState.wdraw : gameState.bdraw) && !(orientation === "white" ? gameState.bdraw : gameState.wdraw) ? <button className="draw-button" onClick={() => void drawAction("yes")} disabled={busy}>Remis anbieten</button> : null}
+        {gameState?.status === "started" && (orientation === "white" ? gameState.bdraw : gameState.wdraw) ? <div className="draw-offer"><strong>Gegner bietet Remis an.</strong><div><button onClick={() => void drawAction("accept")} disabled={busy}>Annehmen</button><button onClick={() => void drawAction("decline")} disabled={busy}>Ablehnen</button></div></div> : null}
+        {gameState?.status === "started" && !(orientation === "white" ? gameState.wdraw : gameState.bdraw) && !(orientation === "white" ? gameState.bdraw : gameState.wdraw) ? <button className="draw-button" onClick={() => void drawAction("offer")} disabled={busy}>Remis anbieten</button> : null}
         {actionMessage && <div className="action-message">{actionMessage}</div>}
         <button className="resign-button" onClick={resign} disabled={busy || gameState?.status !== "started"}>Partie aufgeben</button>
         <a className="lichess-link" href={"https://lichess.org/" + gameId} target="_blank" rel="noreferrer">Auf Lichess ansehen ↗</a>
