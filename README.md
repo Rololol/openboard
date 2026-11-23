@@ -57,5 +57,5 @@ The official Board API supports random seeks for Rapid, Classical, and Correspon
 
 1. OAuth and authenticated profile (implemented)
 2. Lichess Board API matchmaking and direct challenges
-3. Live game stream, legal move UI, clocks, chat, reconnect handling
+3. Direct challenges, chat, reconnect handling, draw offers, and takebacks
 4. Analysis, puzzles, opening explorer, tournaments, and statistics
