@@ -255,7 +255,7 @@ export default function GamePage() {
             const lastMove = gameState?.moves?.trim().split(/\s+/).slice(-1)[0];
             const lastSquare = lastMove && (lastMove.slice(0,2) === square || lastMove.slice(2,4) === square);
             const check = piece?.type === "k" && piece.color === chess.turn() && chess.isCheck();
-            return <button key={square} className={["board-square",((file.charCodeAt(0)-97+rank)%2===0)?"dark":"light",selectedHere?"selected":"",legal?"legal":"",lastSquare?"last-move":"",check?"in-check":""].filter(Boolean).join(" ")} onClick={() => void chooseSquare(square)} disabled={!full || busy || gameState?.status !== "started"}>
+            return <button key={square} className={["board-square",((file.charCodeAt(0)-97+rank)%2===1)?"dark":"light",selectedHere?"selected":"",legal?"legal":"",lastSquare?"last-move":"",check?"in-check":""].filter(Boolean).join(" ")} onClick={() => void chooseSquare(square)} disabled={!full || busy || gameState?.status !== "started"}>
               {piece && <span className={"piece " + (piece.color === "w" ? "white-piece" : "black-piece")}>{glyphs[piece.color + piece.type]}</span>}
               {legal && !piece && <span className="move-dot"/>}
               {legal && piece && <span className="capture-ring"/>}
