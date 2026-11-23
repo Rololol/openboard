@@ -125,7 +125,7 @@ export default function GamePage() {
     void fetch("/api/lichess/game/" + gameId + "/chat", { cache: "no-store", signal: controller.signal })
       .then(async (response) => response.ok ? response.json() : [])
       .then((items) => {
-        if (Array.isArray(items)) setChat(items.filter((item) => item && item.room === "player").map((item) => ({ username: String(item.username || "Spieler"), text: String(item.text || "") })).slice(-50));
+        if (Array.isArray(items)) setChat(items.filter((item) => item && typeof item.text === "string").map((item) => ({ username: String(item.user || "Spieler"), text: String(item.text || "") })).slice(-50));
       })
       .catch(() => undefined);
     const timer = window.setInterval(() => setClockTick((tick) => tick + 1), 250);
