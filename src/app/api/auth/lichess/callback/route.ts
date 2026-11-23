@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
 
   session.accessToken = token.access_token;
   const accountResponse = await fetch("https://lichess.org/api/account", {
-    headers: { Authorization: `Bearer ${token.access_token}`, Accept: "application/json" },
+    headers: { Authorization: `Bearer ${token.access_token}`, Accept: "application/json", "User-Agent": "Openboard (https://github.com/Rololol/openboard)" },
     cache: "no-store",
   });
 
