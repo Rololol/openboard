@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./premium-dashboard.css";
 
 export const metadata: Metadata = {
-  title: "Openboard — Play chess",
-  description: "An independent, modern client for the Lichess chess platform.",
+  title: "Openboard — Dein Premium-Schachclient",
+  description: "Ein moderner, unabhängiger Schachclient auf Basis der offiziellen Lichess-Infrastruktur.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
