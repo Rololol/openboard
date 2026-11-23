@@ -43,10 +43,10 @@ export async function POST(request: NextRequest, context: Context) {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
+      "Content-Type": "application/x-www-form-urlencoded",
       "User-Agent": "Openboard (https://github.com/Rololol/openboard)",
     },
-    body: JSON.stringify({ room: "player", text: input.text.trim() }),
+    body: new URLSearchParams({ room: "player", text: input.text.trim() }),
     cache: "no-store",
   });
   if (!upstream.ok) {
