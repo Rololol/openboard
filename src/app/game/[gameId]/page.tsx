@@ -41,6 +41,7 @@ export default function GamePage() {
   const [message, setMessage] = useState("Verbinde mit der Partie …");
   const [pendingPromotion, setPendingPromotion] = useState<{from:Square;to:Square}|null>(null);
   const streamRef = useRef<AbortController | null>(null);
+  const initialFenRef = useRef<string | undefined>(undefined);
 
   const chess = useMemo(() => new Chess(fen), [fen]);
   const destinations = useMemo(() => {
@@ -73,13 +74,14 @@ export default function GamePage() {
             if (event.type === "gameFull") {
               const next = event as GameFull;
               setFull(next);
+              initialFenRef.current = next.initialFen;
               setGameState(next.state);
               setFen(makeFen(next.initialFen, next.state.moves));
               setMessage(next.state.status === "started" ? "Partie läuft" : "Partie beendet");
             } else if (event.type === "gameState") {
               const next = event as GameState;
               setGameState(next);
-              setFen((current) => makeFen(full?.initialFen, next.moves));
+              setFen(makeFen(initialFenRef.current, next.moves));
               setMessage(next.status === "started" ? "Partie läuft" : "Partie beendet");
             } else if (event.type === "chatLine") {
               // Chat will be added separately.
@@ -95,7 +97,7 @@ export default function GamePage() {
         setMessage("Verbindung unterbrochen");
       }
     }
-  }, [gameId, full?.initialFen]);
+  }, [gameId]);
 
   useEffect(() => {
     void consumeStream();
