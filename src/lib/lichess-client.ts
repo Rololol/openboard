@@ -7,7 +7,9 @@ const STATE_KEY = "openboard_oauth_state";
 
 export function appPath(path: string) {
   const base = process.env.NEXT_PUBLIC_BASE_PATH || "";
-  return base + (path.startsWith("/") ? path : "/" + path);
+  const [pathname, query] = path.split("?", 2);
+  const normalized = pathname === "/" || pathname.endsWith("/") ? pathname : pathname + "/";
+  return base + normalized + (query ? "?" + query : "");
 }
 
 function base64Url(bytes: Uint8Array) {
