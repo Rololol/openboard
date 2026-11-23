@@ -2,7 +2,7 @@
 
 import { Chess, type Square } from "chess.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 
 type Player = { id?: string; name?: string; rating?: number; title?: string };
 type GameFull = { id: string; white: Player; black: Player; initialFen?: string; clock?: { initial: number; increment: number }; state: { moves: string; wtime: number; btime: number; status: string; wdraw?: boolean; bdraw?: boolean } };
@@ -29,9 +29,8 @@ function formatClock(ms: number) {
 
 export default function GamePage() {
   const params = useParams<{ gameId: string }>();
-  const search = useSearchParams();
   const gameId = params.gameId;
-  const orientation = search.get("color") === "black" ? "black" : "white";
+  const [orientation, setOrientation] = useState<"white" | "black">("white");
   const [full, setFull] = useState<GameFull | null>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [fen, setFen] = useState(new Chess().fen());
@@ -98,6 +97,10 @@ export default function GamePage() {
       }
     }
   }, [gameId]);
+
+  useEffect(() => {
+    setOrientation(new URLSearchParams(window.location.search).get("color") === "black" ? "black" : "white");
+  }, []);
 
   useEffect(() => {
     void consumeStream();
