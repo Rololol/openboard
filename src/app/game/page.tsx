@@ -121,17 +121,20 @@ export default function GamePage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    setGameId(params.get("gameId") || "");
+    const id = params.get("gameId") || "";
+    setGameId(id);
     setOrientation(params.get("color") === "black" ? "black" : "white");
-    if (params.get("gameId") && getAccessToken()) {
-      void lichessJson<{ user?: string; text?: string }[]>("/api/board/game/" + params.get("gameId") + "/chat")
-        .then((items) => setChat(items.filter((item) => item && typeof item.text === "string").map((item) => ({ username: String(item.user || "Spieler"), text: String(item.text || "") })).slice(-50)))
-        .catch(() => undefined);
-    }
+    if (!id) setError("Keine Partie-ID angegeben. Öffne eine Partie über die Spielsuche.");
+    if (!getAccessToken()) setError("Bitte zuerst mit Lichess verbinden.");
     const timer = window.setInterval(() => setClockTick((tick) => tick + 1), 250);
-    return () => {
-      window.clearInterval(timer);
-    };
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!gameId || !getAccessToken()) return;
+    void lichessJson<{ user?: string; text?: string }[]>("/api/board/game/" + gameId + "/chat")
+      .then((items) => setChat(items.filter((item) => item && typeof item.text === "string").map((item) => ({ username: String(item.user || "Spieler"), text: String(item.text || "") })).slice(-50)))
+      .catch(() => undefined);
   }, [gameId]);
 
   useEffect(() => {
