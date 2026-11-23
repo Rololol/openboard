@@ -10,7 +10,7 @@ export async function GET() {
   }
 
   const response = await fetch("https://lichess.org/api/account", {
-    headers: { Authorization: `Bearer ${session.accessToken}`, Accept: "application/json" },
+    headers: { Authorization: `Bearer ${session.accessToken}`, Accept: "application/json", "User-Agent": "Openboard (https://github.com/Rololol/openboard)" },
     cache: "no-store",
   });
 
