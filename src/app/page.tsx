@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Activity, ArrowUpRight, BarChart3, BookOpen, CalendarDays, ChevronRight, Clock3, History, Home, Moon, Puzzle, Settings2, ShieldCheck, Sun, Swords, Trophy, Users, Zap } from "lucide-react";
+import { Activity, ArrowUpRight, BarChart3, BookOpen, CalendarDays, ChevronRight, Clock3, History, Home as HomeIcon, Moon, Puzzle, Settings2, ShieldCheck, Sun, Swords, Trophy, Users, Zap } from "lucide-react";
 import { appPath, beginLichessLogin, getAccessToken, lichessFetch, lichessJson, logoutLichess } from "@/lib/lichess-client";
 
 type Perf = { rating?: number; games?: number; rd?: number; prog?: number };
@@ -26,7 +26,7 @@ const ratings = [
 
 const navGroups = [
   { label: "SPIELEN", items: [
-    { label: "Übersicht", href: "/", icon: Home, internal: true },
+    { label: "Übersicht", href: "/", icon: HomeIcon, internal: true },
     { label: "Partie starten", href: "/play/", icon: Swords, internal: true },
     { label: "Turniere", href: "https://lichess.org/tournament", icon: Trophy },
     { label: "Freunde", href: "https://lichess.org/player", icon: Users },
