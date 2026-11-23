@@ -30,7 +30,7 @@ function formatClock(ms: number) {
 function getNotation(initialFen: string | undefined, moves: string) {
   const chess = new Chess(initialFen && initialFen !== "startpos" ? initialFen : undefined);
   const result: { number: number; color: string; san: string }[] = [];
-  for (const [index, uci] of moves.trim().split(/\\s+/).filter(Boolean).entries()) {
+  for (const [index, uci] of moves.trim().split(/\s+/).filter(Boolean).entries()) {
     try {
       const move = chess.move({ from: uci.slice(0,2), to: uci.slice(2,4), promotion: uci[4] || "q" });
       result.push({ number: Math.floor(index / 2) + 1, color: index % 2 === 0 ? "white" : "black", san: move.san });
