@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Activity, ArrowUpRight, BarChart3, BookOpen, CalendarDays, ChevronRight, CircleHelp, Clock3, Crown, Gamepad2, History, Home, MessageCircle, Moon, Puzzle, Settings2, ShieldCheck, Sun, Swords, Trophy, Users, Zap } from "lucide-react";
+import { Activity, ArrowUpRight, BarChart3, BookOpen, CalendarDays, ChevronRight, Clock3, History, Home, Moon, Puzzle, Settings2, ShieldCheck, Sun, Swords, Trophy, Users, Zap } from "lucide-react";
 import { appPath, beginLichessLogin, getAccessToken, lichessFetch, lichessJson, logoutLichess } from "@/lib/lichess-client";
 
 type Perf = { rating?: number; games?: number; rd?: number; prog?: number };
