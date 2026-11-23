@@ -99,7 +99,8 @@ export default function PlayPage() {
         }
       }
     } catch (cause) {
-      if (cause instanceof Error && cause.name !== "AbortError") setError(cause.message);
+      if (cause instanceof Error && cause.name === "AbortError") return;
+      if (cause instanceof Error) setError(cause.message);
       setSearching(false);
       setStatus("Spielsuche beendet.");
     }
