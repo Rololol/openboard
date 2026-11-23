@@ -48,11 +48,13 @@ export default function GamePage() {
   const [fen, setFen] = useState(new Chess().fen());
   const [selected, setSelected] = useState<Square | null>(null);
   const [busy, setBusy] = useState(false);
+  const [clockTick, setClockTick] = useState(0);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("Verbinde mit der Partie …");
   const [pendingPromotion, setPendingPromotion] = useState<{from:Square;to:Square}|null>(null);
   const streamRef = useRef<AbortController | null>(null);
   const initialFenRef = useRef<string | undefined>(undefined);
+  const clockAnchorRef = useRef(Date.now());
 
   const chess = useMemo(() => new Chess(fen), [fen]);
   const destinations = useMemo(() => {
@@ -88,11 +90,13 @@ export default function GamePage() {
               setFull(next);
               initialFenRef.current = next.initialFen;
               setGameState(next.state);
+              clockAnchorRef.current = Date.now();
               setFen(makeFen(next.initialFen, next.state.moves));
               setMessage(next.state.status === "started" ? "Partie läuft" : "Partie beendet");
             } else if (event.type === "gameState") {
               const next = event as GameState;
               setGameState(next);
+              clockAnchorRef.current = Date.now();
               setFen(makeFen(initialFenRef.current, next.moves));
               setMessage(next.status === "started" ? "Partie läuft" : "Partie beendet");
             } else if (event.type === "chatLine") {
@@ -113,6 +117,8 @@ export default function GamePage() {
 
   useEffect(() => {
     setOrientation(new URLSearchParams(window.location.search).get("color") === "black" ? "black" : "white");
+    const timer = window.setInterval(() => setClockTick((tick) => tick + 1), 250);
+    return () => window.clearInterval(timer);
   }, []);
 
   useEffect(() => {
@@ -174,9 +180,13 @@ export default function GamePage() {
   const cols = orientation === "white" ? ["a","b","c","d","e","f","g","h"] : ["h","g","f","e","d","c","b","a"];
   const player = orientation === "white" ? full?.white : full?.black;
   const opponent = orientation === "white" ? full?.black : full?.white;
-  const playerTime = orientation === "white" ? gameState?.wtime : gameState?.btime;
-  const opponentTime = orientation === "white" ? gameState?.btime : gameState?.wtime;
+  const elapsed = gameState?.status === "started" ? Date.now() - clockAnchorRef.current : 0;
+  const playerTimeBase = orientation === "white" ? gameState?.wtime : gameState?.btime;
+  const opponentTimeBase = orientation === "white" ? gameState?.btime : gameState?.wtime;
+  const playerTime = Math.max(0, (playerTimeBase ?? 0) - (isYourTurn ? elapsed : 0));
+  const opponentTime = Math.max(0, (opponentTimeBase ?? 0) - (isYourTurn ? 0 : elapsed));
   const isYourTurn = gameState?.status === "started" && ((orientation === "white" && chess.turn() === "w") || (orientation === "black" && chess.turn() === "b"));
+  void clockTick;
 
   return <div className="game-page">
     <header className="game-topbar"><a href="/play">← Spielsuche</a><span>OPENBOARD <i/> LIVE-PARTIE</span><a href="/">Dashboard</a></header>
