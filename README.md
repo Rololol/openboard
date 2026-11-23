@@ -36,7 +36,9 @@ The callback URL is `{APP_URL}/api/auth/lichess/callback`.
 
 ## Implemented
 
-- Responsive dashboard and navigation shell
+- Responsive chess-club dashboard and navigation shell
+- Mobile-first matchmaking page with rated/casual selection and Rapid/Classical time controls
+- Authenticated Lichess Board API seek proxy and live account event stream proxy
 - Lichess OAuth 2.0 Authorization Code + PKCE start/callback flow
 - State validation and encrypted server-side session cookie
 - Authenticated account proxy and profile/rating display
