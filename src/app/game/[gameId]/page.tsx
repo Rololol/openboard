@@ -151,13 +151,7 @@ export default function GamePage() {
     setError("");
     setSelected(null);
     try {
-      const response = await fetch("/api/lichess/game/" + gameId + "/move", {
-        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ uci }),
-      });
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        throw new Error(payload.error || "Zug konnte nicht gesendet werden.");
-      }
+      await lichessFetch("/api/board/game/" + gameId + "/move/" + uci, { method: "POST" });
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Zug fehlgeschlagen.");
     } finally { setBusy(false); }
@@ -188,15 +182,11 @@ export default function GamePage() {
     setBusy(true);
     setError("");
     try {
-      const response = await fetch("/api/lichess/game/" + gameId + "/chat", {
+      await lichessFetch("/api/board/game/" + gameId + "/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ room: "player", text }),
       });
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        throw new Error(payload.error || "Nachricht konnte nicht gesendet werden.");
-      }
       setChatText("");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Chat-Nachricht fehlgeschlagen.");
@@ -209,11 +199,7 @@ export default function GamePage() {
     setActionMessage("");
     try {
       const apiAction = action === "decline" ? "no" : "yes";
-      const response = await fetch("/api/lichess/game/" + gameId + "/draw/" + apiAction, { method: "POST" });
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        throw new Error(payload.error || "Remis-Aktion fehlgeschlagen.");
-      }
+      await lichessFetch("/api/board/game/" + gameId + "/draw/" + apiAction, { method: "POST" });
       setActionMessage(action === "offer" ? "Remis angeboten." : action === "decline" ? "Remisangebot abgelehnt." : "Remis angenommen.");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Remis-Aktion fehlgeschlagen.");
@@ -226,11 +212,7 @@ export default function GamePage() {
     setActionMessage("");
     try {
       const apiAction = action === "decline" ? "no" : "yes";
-      const response = await fetch("/api/lichess/game/" + gameId + "/takeback/" + apiAction, { method: "POST" });
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        throw new Error(payload.error || "Zugrücknahme fehlgeschlagen.");
-      }
+      await lichessFetch("/api/board/game/" + gameId + "/takeback/" + apiAction, { method: "POST" });
       setActionMessage(action === "offer" ? "Zugrücknahme angeboten." : action === "decline" ? "Zugrücknahme abgelehnt." : "Zugrücknahme angenommen.");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Zugrücknahme fehlgeschlagen.");
@@ -241,8 +223,7 @@ export default function GamePage() {
     if (!window.confirm("Möchtest du diese Partie wirklich aufgeben?")) return;
     setBusy(true);
     try {
-      const response = await fetch("/api/lichess/game/" + gameId + "/resign", { method: "POST" });
-      if (!response.ok) throw new Error("Aufgeben fehlgeschlagen.");
+      await lichessFetch("/api/board/game/" + gameId + "/resign", { method: "POST" });
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Aktion fehlgeschlagen."); }
     finally { setBusy(false); }
   }
@@ -260,7 +241,7 @@ export default function GamePage() {
   void clockTick;
 
   return <div className="game-page">
-    <header className="game-topbar"><a href="/play">← Spielsuche</a><span>OPENBOARD <i/> LIVE-PARTIE</span><a href="/">Dashboard</a></header>
+    <header className="game-topbar"><a href={appPath("/play")}>← Spielsuche</a><span>OPENBOARD <i/> LIVE-PARTIE</span><a href={appPath("/")}>Dashboard</a></header>
     <main className="game-layout">
       <section className="board-column">
         <div className="player-bar opponent-bar"><span className="player-avatar">{opponent?.name?.slice(0,1).toUpperCase() || "?"}</span><div><strong>{opponent?.name || "Gegner"}</strong><small>{opponent?.rating ? opponent.rating + " Elo" : "Lichess-Spieler"}</small></div><strong className="clock">{formatClock(opponentTime ?? 0)}</strong></div>
