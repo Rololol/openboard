@@ -26,7 +26,7 @@ Open http://localhost:3000.
 
 ## Environment
 
-- `LICHESS_CLIENT_ID`: optional unique public OAuth client identifier (defaults to `openboard`)
+- `LICHESS_CLIENT_ID`: optional unique public OAuth client identifier (defaults to `openboard-rololol`)
 - `APP_URL`: application origin, including scheme (for local development: `http://localhost:3000`)
 - `SESSION_SECRET`: random secret of at least 32 characters; generate with `openssl rand -base64 48`
 
