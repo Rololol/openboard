@@ -29,6 +29,7 @@ export default function Home() {
   const [account, setAccount] = useState<Account | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [authStatus, setAuthStatus] = useState<string | null>(null);
 
   async function loadAccount() {
     setLoading(true);
@@ -49,15 +50,15 @@ export default function Home() {
     }
   }
 
-  useEffect(() => { void loadAccount(); }, []);
+  useEffect(() => {
+    void loadAccount();
+    setAuthStatus(new URLSearchParams(window.location.search).get("auth"));
+  }, []);
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
     setAccount(null);
   }
-
-  const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
-  const authStatus = params?.get("auth");
 
   return (
     <div className="shell">
