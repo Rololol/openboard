@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  const clientId = process.env.LICHESS_CLIENT_ID || "openboard";
+  const clientId = process.env.LICHESS_CLIENT_ID || "openboard-rololol";
   const redirectUri = new URL("/api/auth/lichess/callback", process.env.APP_URL || request.nextUrl.origin).toString();
   const body = new URLSearchParams({
     grant_type: "authorization_code",
