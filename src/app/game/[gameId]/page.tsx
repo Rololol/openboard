@@ -123,7 +123,6 @@ export default function GamePage() {
     const params = new URLSearchParams(window.location.search);
     setGameId(params.get("gameId") || "");
     setOrientation(params.get("color") === "black" ? "black" : "white");
-    const controller = new AbortController();
     if (params.get("gameId") && getAccessToken()) {
       void lichessJson<{ user?: string; text?: string }[]>("/api/board/game/" + params.get("gameId") + "/chat")
         .then((items) => setChat(items.filter((item) => item && typeof item.text === "string").map((item) => ({ username: String(item.user || "Spieler"), text: String(item.text || "") })).slice(-50)))
@@ -131,7 +130,6 @@ export default function GamePage() {
     }
     const timer = window.setInterval(() => setClockTick((tick) => tick + 1), 250);
     return () => {
-      controller.abort();
       window.clearInterval(timer);
     };
   }, [gameId]);
