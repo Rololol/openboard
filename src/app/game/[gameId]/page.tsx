@@ -16,7 +16,7 @@ const glyphs: Record<string,string> = {
 function makeFen(initialFen: string | undefined, moves: string) {
   const chess = new Chess(initialFen && initialFen !== "startpos" ? initialFen : undefined);
   for (const uci of moves.trim().split(/\s+/).filter(Boolean)) {
-    try { chess.move({ from: uci.slice(0,2), to: uci.slice(2,4), promotion: uci[4] || "q" }); }
+    try { chess.move({ from: uci.slice(0,2) as Square, to: uci.slice(2,4) as Square, promotion: (uci[4] || "q") as "q" | "r" | "b" | "n" }); }
     catch { break; }
   }
   return chess.fen();
