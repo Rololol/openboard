@@ -60,11 +60,13 @@ export default function PlayPage() {
               try {
                 const event = JSON.parse(line);
                 if (event.type === "gameStart" && event.game?.id) {
+                  const color = event.game.color === "black" ? "black" : "white";
                   setGameId(event.game.id);
-                  setStatus("Gegner gefunden. Deine Partie wurde bei Lichess gestartet.");
+                  setStatus("Gegner gefunden. Öffne dein Spielbrett …");
                   setSearching(false);
                   seekController.current?.abort();
                   eventController.current?.abort();
+                  window.location.assign("/game/" + event.game.id + "?color=" + color);
                   return;
                 }
                 if (event.type === "challenge") setStatus("Eine Herausforderung ist eingegangen.");
