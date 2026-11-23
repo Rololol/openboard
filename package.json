@@ -10,7 +10,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@lichess-org/api": "latest",
     "chessops": "latest",
     "lucide-react": "latest",
     "next": "15.5.6",
