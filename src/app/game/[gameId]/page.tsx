@@ -27,6 +27,18 @@ function formatClock(ms: number) {
   return Math.floor(seconds / 60) + ":" + String(seconds % 60).padStart(2,"0");
 }
 
+function getNotation(initialFen: string | undefined, moves: string) {
+  const chess = new Chess(initialFen && initialFen !== "startpos" ? initialFen : undefined);
+  const result: { number: number; color: string; san: string }[] = [];
+  for (const [index, uci] of moves.trim().split(/\\s+/).filter(Boolean).entries()) {
+    try {
+      const move = chess.move({ from: uci.slice(0,2), to: uci.slice(2,4), promotion: uci[4] || "q" });
+      result.push({ number: Math.floor(index / 2) + 1, color: index % 2 === 0 ? "white" : "black", san: move.san });
+    } catch { break; }
+  }
+  return result;
+}
+
 export default function GamePage() {
   const params = useParams<{ gameId: string }>();
   const gameId = params.gameId;
@@ -47,6 +59,7 @@ export default function GamePage() {
     if (!selected) return [];
     return chess.moves({ square: selected, verbose: true }).map(move => move.to);
   }, [chess, selected]);
+  const notation = useMemo(() => getNotation(full?.initialFen, gameState?.moves ?? ""), [full?.initialFen, gameState?.moves]);
 
   const consumeStream = useCallback(async () => {
     const controller = new AbortController();
@@ -192,7 +205,7 @@ export default function GamePage() {
       </section>
       <aside className="game-sidebar">
         <div className="game-status"><span className={"status-dot " + (gameState?.status === "started" ? "pulsing" : "")}/><strong>{gameState?.status === "started" ? (isYourTurn ? "Du bist am Zug" : "Gegner am Zug") : gameState ? "Partie beendet" : message}</strong></div>
-        <div className="move-list"><div className="eyebrow">PARTIE</div><div className="move-empty">{gameState?.moves ? gameState.moves.split(" ").length + " Halbzüge gespielt" : "Die Züge erscheinen hier, sobald sie gespielt werden."}</div></div>
+        <div className="move-list"><div className="eyebrow">ZUGLISTE</div>{notation.length ? <div className="move-notation">{notation.map((move,index) => <span key={index}><b>{move.color === "white" ? move.number + "." : move.number + "…"}</b> {move.san}</span>)}</div> : <div className="move-empty">Die Züge erscheinen hier, sobald sie gespielt werden.</div>}</div>
         {error && <div className="game-error">{error}</div>}
         <button className="resign-button" onClick={resign} disabled={busy || gameState?.status !== "started"}>Partie aufgeben</button>
         <a className="lichess-link" href={"https://lichess.org/" + gameId} target="_blank" rel="noreferrer">Auf Lichess ansehen ↗</a>
