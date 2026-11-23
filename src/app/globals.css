@@ -22,3 +22,5 @@
 @media(min-width:761px){.live-board{max-height:calc(100vh - 180px)}}
 
 .move-notation{display:flex;flex-wrap:wrap;gap:8px 13px;padding:10px 2px;max-height:190px;overflow:auto}.move-notation span{font-size:12px;color:#e5e1d9;white-space:nowrap}.move-notation b{color:#99948a;font-size:10px;margin-right:3px}
+
+.draw-button{width:100%;border:1px solid #5c6447;background:#394331;color:#d8edc5;border-radius:7px;padding:11px;font-size:12px;font-weight:800}.draw-offer{padding:11px;background:#393a2d;border:1px solid #686744;border-radius:7px;display:grid;gap:10px}.draw-offer strong{font-size:12px;color:#e5e2bc}.draw-offer div{display:flex;gap:7px}.draw-offer button{flex:1;border:1px solid #77754b;background:#4a4a34;color:#f0edc6;border-radius:5px;padding:8px;font-size:11px;font-weight:800}.action-message{font-size:11px;color:#c9e7ad}
