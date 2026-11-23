@@ -6,7 +6,7 @@ import { useParams } from "next/navigation";
 
 type Player = { id?: string; name?: string; rating?: number; title?: string };
 type GameFull = { id: string; white: Player; black: Player; initialFen?: string; clock?: { initial: number; increment: number }; state: { moves: string; wtime: number; btime: number; status: string; wdraw?: boolean; bdraw?: boolean } };
-type GameState = { moves: string; wtime: number; btime: number; status: string; wdraw?: boolean; bdraw?: boolean };
+type GameState = { moves: string; wtime: number; btime: number; status: string; wdraw?: boolean; bdraw?: boolean; wtakeback?: boolean; btakeback?: boolean };
 type ChatMessage = { username: string; text: string };
 
 const glyphs: Record<string,string> = {
@@ -219,6 +219,23 @@ export default function GamePage() {
     } finally { setBusy(false); }
   }
 
+  async function takebackAction(action: "offer" | "accept" | "decline") {
+    setBusy(true);
+    setError("");
+    setActionMessage("");
+    try {
+      const apiAction = action === "decline" ? "no" : "yes";
+      const response = await fetch("/api/lichess/game/" + gameId + "/takeback/" + apiAction, { method: "POST" });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "Zugrücknahme fehlgeschlagen.");
+      }
+      setActionMessage(action === "offer" ? "Zugrücknahme angeboten." : action === "decline" ? "Zugrücknahme abgelehnt." : "Zugrücknahme angenommen.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Zugrücknahme fehlgeschlagen.");
+    } finally { setBusy(false); }
+  }
+
   async function resign() {
     if (!window.confirm("Möchtest du diese Partie wirklich aufgeben?")) return;
     setBusy(true);
@@ -273,6 +290,8 @@ export default function GamePage() {
         {error && <div className="game-error">{error}</div>}
         {gameState?.status === "started" && (orientation === "white" ? gameState.bdraw : gameState.wdraw) ? <div className="draw-offer"><strong>Gegner bietet Remis an.</strong><div><button onClick={() => void drawAction("accept")} disabled={busy}>Annehmen</button><button onClick={() => void drawAction("decline")} disabled={busy}>Ablehnen</button></div></div> : null}
         {gameState?.status === "started" && !(orientation === "white" ? gameState.wdraw : gameState.bdraw) && !(orientation === "white" ? gameState.bdraw : gameState.wdraw) ? <button className="draw-button" onClick={() => void drawAction("offer")} disabled={busy}>Remis anbieten</button> : null}
+        {gameState?.status === "started" && (orientation === "white" ? gameState.btakeback : gameState.wtakeback) ? <div className="draw-offer"><strong>Gegner bietet Zugrücknahme an.</strong><div><button onClick={() => void takebackAction("accept")} disabled={busy}>Annehmen</button><button onClick={() => void takebackAction("decline")} disabled={busy}>Ablehnen</button></div></div> : null}
+        {gameState?.status === "started" && notation.length > 0 && !(orientation === "white" ? gameState.wtakeback : gameState.btakeback) && !(orientation === "white" ? gameState.btakeback : gameState.wtakeback) ? <button className="draw-button" onClick={() => void takebackAction("offer")} disabled={busy}>Zug zurücknehmen lassen</button> : null}
         {actionMessage && <div className="action-message">{actionMessage}</div>}
         <button className="resign-button" onClick={resign} disabled={busy || gameState?.status !== "started"}>Partie aufgeben</button>
         <a className="lichess-link" href={"https://lichess.org/" + gameId} target="_blank" rel="noreferrer">Auf Lichess ansehen ↗</a>
