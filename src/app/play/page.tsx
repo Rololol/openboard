@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Moon, Sun } from "lucide-react";
 import { appPath, getAccessToken, lichessFetch } from "@/lib/lichess-client";
 
 type TimeOption = { label: string; time: number; increment: number; detail: string };
@@ -11,6 +12,7 @@ const timeOptions: TimeOption[] = [
 ];
 
 export default function PlayPage() {
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [selected, setSelected] = useState("10 + 0");
   const [rated, setRated] = useState(true);
   const [searching, setSearching] = useState(false);
@@ -22,13 +24,15 @@ export default function PlayPage() {
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem("openboard-theme");
-    if (savedTheme === "light" || savedTheme === "dark") document.documentElement.dataset.theme = savedTheme;
+    if (savedTheme === "light" || savedTheme === "dark") { document.documentElement.dataset.theme = savedTheme; setTheme(savedTheme); }
   }, []);
 
   useEffect(() => () => {
     eventController.current?.abort();
     seekController.current?.abort();
   }, []);
+
+  function toggleTheme() { const next = theme === "dark" ? "light" : "dark"; setTheme(next); document.documentElement.dataset.theme = next; window.localStorage.setItem("openboard-theme", next); }
 
   async function startSearch() {
     const option = timeOptions.find((item) => item.label === selected);
@@ -135,7 +139,7 @@ export default function PlayPage() {
   const currentOption = timeOptions.find((item) => item.label === selected);
 
   return <div className="play-page">
-    <header className="play-header"><a href={appPath("/")} className="back-link">← Openboard</a><span className="eyebrow">LICHESS MATCHMAKING</span></header>
+    <header className="play-header"><a href={appPath("/")} className="back-link">← Openboard</a><span className="eyebrow">LICHESS MATCHMAKING</span><button className="route-theme-toggle" onClick={toggleTheme} aria-label={theme === "dark" ? "Helles Theme aktivieren" : "Dunkles Theme aktivieren"}>{theme === "dark" ? <Sun size={17}/> : <Moon size={17}/>}</button></header>
     <main className="play-content">
       <div className="eyebrow">SPIELEN</div>
       <h1>Finde deinen Gegner.</h1>
