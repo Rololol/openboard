@@ -1,6 +1,6 @@
 const LICHESS = "https://lichess.org";
 const CLIENT_ID = "openboard-rololol";
-const SCOPES = "board:play challenge:read challenge:write";
+const SCOPES = "board:play challenge:read challenge:write follow:read";
 const TOKEN_KEY = "openboard_lichess_token";
 const VERIFIER_KEY = "openboard_pkce_verifier";
 const STATE_KEY = "openboard_oauth_state";
