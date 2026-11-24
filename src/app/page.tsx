@@ -28,14 +28,14 @@ const navGroups = [
   { label: "SPIELEN", items: [
     { label: "Übersicht", href: "/", icon: HomeIcon, internal: true },
     { label: "Partie starten", href: "/play/", icon: Swords, internal: true },
-    { label: "Turniere", href: "https://lichess.org/tournament", icon: Trophy },
-    { label: "Freunde", href: "https://lichess.org/player", icon: Users },
+    { label: "Turniere", href: "/features/tournaments/", icon: Trophy, internal: true },
+    { label: "Freunde", href: "/features/friends/", icon: Users, internal: true },
   ]},
   { label: "TRAINIEREN", items: [
-    { label: "Tägliches Puzzle", href: "https://lichess.org/training/daily", icon: Puzzle },
-    { label: "Puzzle Storm", href: "https://lichess.org/storm", icon: Zap },
-    { label: "Lernen", href: "https://lichess.org/practice", icon: BookOpen },
-    { label: "Analyse", href: "https://lichess.org/analysis", icon: BarChart3 },
+    { label: "Tägliches Puzzle", href: "/features/puzzles/", icon: Puzzle, internal: true },
+    { label: "Puzzle Storm", href: "/features/storm/", icon: Zap, internal: true },
+    { label: "Lernen", href: "/features/learn/", icon: BookOpen, internal: true },
+    { label: "Analyse", href: "/features/analysis/", icon: BarChart3, internal: true },
   ]},
 ];
 
@@ -91,7 +91,7 @@ export default function Home() {
   }, [theme]);
 
   async function logout() { await logoutLichess(); setAccount(null); setGames([]); }
-  const profileUrl = account ? "https://lichess.org/@/" + encodeURIComponent(account.username) : "https://lichess.org";
+  const profileUrl = account ? appPath("/features/profile/") + "?user=" + encodeURIComponent(account.username) : appPath("/features/profile/");
 
   return <div className="premium-shell">
     <aside className="premium-sidebar">
@@ -107,7 +107,7 @@ export default function Home() {
         })}
       </div>)}
       <div className="premium-sidebar-bottom">
-        <a href="https://lichess.org/account/preferences" target="_blank" rel="noreferrer"><Settings2 size={17}/> Einstellungen <ArrowUpRight size={12}/></a>
+        <a href={appPath("/features/settings/")}><Settings2 size={17}/> Einstellungen <ArrowUpRight size={12}/></a>
         <div className="sidebar-source"><ShieldCheck size={15}/> Spielbetrieb durch Lichess</div>
       </div>
     </aside>
@@ -132,7 +132,7 @@ export default function Home() {
           <p>{account ? "Dein Lichess-Konto ist bereit. Starte eine echte Partie gegen Spieler auf der ganzen Welt." : "Verbinde dein Lichess-Konto und spiele direkt auf der offiziellen Lichess-Infrastruktur."}</p>
           <div className="hero-actions">
             {account ? <a className="primary-cta" href={appPath("/play/")}>Jetzt spielen <ChevronRight size={18}/></a> : <button className="primary-cta" onClick={() => void beginLichessLogin()}>Kostenlos verbinden <ChevronRight size={18}/></button>}
-            <a className="secondary-cta" href="https://lichess.org/tv" target="_blank" rel="noreferrer">Partien ansehen <ArrowUpRight size={15}/></a>
+            <a className="secondary-cta" href={appPath("/features/tv/")}>Partien ansehen <ArrowUpRight size={15}/></a>
           </div>
           <div className="hero-trust"><ShieldCheck size={15}/> Dein Konto, deine Wertung und alle Partien bleiben bei Lichess.</div>
         </div>
@@ -158,7 +158,7 @@ export default function Home() {
           <div className="section-heading compact"><div><div className="premium-eyebrow">DEINE WERTUNGEN</div><h2>Rating-Übersicht</h2></div><span className="data-source">LIVE VON LICHESS</span></div>
           <div className="premium-rating-grid">{ratings.map((rating) => <div className={"premium-rating-card " + rating.color} key={rating.key}><div className="rating-card-top"><span>{rating.label}</span><span className="rating-spark">↗</span></div><strong>{loading ? "…" : account?.perfs?.[rating.key]?.rating ?? "—"}</strong><small>{account?.perfs?.[rating.key]?.games != null ? account.perfs[rating.key].games + " Partien" : "Noch keine Daten"}</small></div>)}</div>
 
-          <div className="section-heading compact recent-heading"><div><div className="premium-eyebrow">DEINE LETZTEN PARTIEN</div><h2>Spielhistorie</h2></div>{account && <a href={profileUrl + "/all"} target="_blank" rel="noreferrer">Alle ansehen <ArrowUpRight size={14}/></a>}</div>
+          <div className="section-heading compact recent-heading"><div><div className="premium-eyebrow">DEINE LETZTEN PARTIEN</div><h2>Spielhistorie</h2></div>{account && <a href={appPath("/features/history/")}>Alle ansehen <ArrowUpRight size={14}/></a>}</div>
           <div className="recent-games-card">
             {!account ? <div className="empty-state"><History size={22}/><strong>Deine Partien auf einen Blick</strong><span>Verbinde dein Lichess-Konto, um deine letzten Spiele zu sehen.</span></div> :
               gamesLoading ? <div className="empty-state">Spielhistorie wird geladen …</div> :
@@ -166,7 +166,7 @@ export default function Home() {
                 const white = game.players?.white?.user?.name || "Anonym";
                 const black = game.players?.black?.user?.name || "Anonym";
                 const result = gameResult(game, account.username);
-                return <a className="recent-game-row" key={game.id} href={"https://lichess.org/" + game.id} target="_blank" rel="noreferrer">
+                return <a className="recent-game-row" key={game.id} href={appPath("/features/analysis/") + "?gameId=" + encodeURIComponent(game.id)}>
                   <span className={"result-mark " + (result === "Sieg" ? "won" : result === "Niederlage" ? "lost" : "drawn")}>{result === "Sieg" ? "W" : result === "Niederlage" ? "L" : "½"}</span>
                   <span className="game-players"><strong>{white}</strong><small>vs</small><strong>{black}</strong></span>
                   <span className="game-meta">{game.perf || game.speed || "Schach"} · {gameDate(game.createdAt)}</span>
@@ -179,26 +179,26 @@ export default function Home() {
         <aside className="dashboard-side-column">
           <div className="section-heading compact"><div><div className="premium-eyebrow">TÄGLICH TRAINIEREN</div><h2>Daily Puzzle</h2></div><Puzzle size={19}/></div>
           <div className="daily-puzzle-card">
-            <div className="puzzle-embed"><iframe title="Lichess Puzzle des Tages" src={"https://lichess.org/training/frame?bg=" + theme + "&theme=brown"} loading="lazy" allow="fullscreen"/></div>
-            <div className="puzzle-footer"><span>Offizielles Lichess-Puzzle</span><a href="https://lichess.org/training/daily" target="_blank" rel="noreferrer">Training öffnen <ArrowUpRight size={13}/></a></div>
+            <div className="puzzle-embed puzzle-local"><div className="puzzle-local-board">♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜<br/>♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟<br/><span>OPENBOARD</span><br/>♙ ♙ ♙ ♙ ♙ ♙ ♙ ♙<br/>♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖</div><p>Das tägliche Taktiktraining öffnet direkt in Openboard.</p><a className="primary-cta" href={appPath("/features/puzzles/")}>Puzzle starten <ChevronRight size={15}/></a></div>
+            <div className="puzzle-footer"><span>Offizielles Lichess-Puzzle</span><a href={appPath("/features/puzzles/")}>Training öffnen <ArrowUpRight size={13}/></a></div>
           </div>
           <div className="progress-card">
             <div className="progress-icon"><Activity size={19}/></div><div><strong>Dein Fortschritt</strong><p>{account ? (account.count?.all ?? 0) + " Partien insgesamt auf Lichess" : "Verbinde dein Konto für persönliche Statistiken."}</p></div>
-            {account && <a href={profileUrl} target="_blank" rel="noreferrer" aria-label="Lichess-Profil öffnen"><ArrowUpRight size={16}/></a>}
+            {account && <a href={profileUrl} aria-label="Openboard-Profil öffnen"><ArrowUpRight size={16}/></a>}
           </div>
           <div className="feature-links">
-            <a href="https://lichess.org/storm" target="_blank" rel="noreferrer"><span className="feature-icon storm"><Zap size={17}/></span><span><strong>Puzzle Storm</strong><small>Teste deine Geschwindigkeit</small></span><ArrowUpRight size={14}/></a>
-            <a href="https://lichess.org/practice" target="_blank" rel="noreferrer"><span className="feature-icon learn"><BookOpen size={17}/></span><span><strong>Eröffnungen & Praxis</strong><small>Trainiere gezielt</small></span><ArrowUpRight size={14}/></a>
-            <a href="https://lichess.org/tournament" target="_blank" rel="noreferrer"><span className="feature-icon tourney"><Trophy size={17}/></span><span><strong>Turniere</strong><small>Spiele um den Sieg</small></span><ArrowUpRight size={14}/></a>
+            <a href={appPath("/features/storm/")}><span className="feature-icon storm"><Zap size={17}/></span><span><strong>Puzzle Storm</strong><small>Teste deine Geschwindigkeit</small></span><ArrowUpRight size={14}/></a>
+            <a href={appPath("/features/learn/")}><span className="feature-icon learn"><BookOpen size={17}/></span><span><strong>Eröffnungen & Praxis</strong><small>Trainiere gezielt</small></span><ArrowUpRight size={14}/></a>
+            <a href={appPath("/features/tournaments/")}><span className="feature-icon tourney"><Trophy size={17}/></span><span><strong>Turniere</strong><small>Spiele um den Sieg</small></span><ArrowUpRight size={14}/></a>
           </div>
         </aside>
       </section>
 
       <section className="premium-account-footer">
         <div><div className="premium-eyebrow">DEIN LICHESS-KONTO</div><h2>{account ? account.username : "Alles beginnt mit deinem Lichess-Konto."}</h2><p>{account ? "Verbunden mit der offiziellen Lichess-Infrastruktur." : "Ein Login. Deine bestehenden Wertungen. Deine gesamte Spielhistorie."}</p></div>
-        {account ? <div className="footer-account-actions"><a className="secondary-cta" href={profileUrl} target="_blank" rel="noreferrer">Profil öffnen <ArrowUpRight size={14}/></a><button className="disconnect-button" onClick={() => void logout()}>Abmelden</button></div> : <button className="primary-cta" onClick={() => void beginLichessLogin()}>Mit Lichess verbinden <ArrowUpRight size={15}/></button>}
+        {account ? <div className="footer-account-actions"><a className="secondary-cta" href={profileUrl}>Profil öffnen <ArrowUpRight size={14}/></a><button className="disconnect-button" onClick={() => void logout()}>Abmelden</button></div> : <button className="primary-cta" onClick={() => void beginLichessLogin()}>Mit Lichess verbinden <ArrowUpRight size={15}/></button>}
       </section>
-      <footer className="premium-footer"><span>OPENBOARD</span><span>Unabhängiger Client · Spielbetrieb und Kontodaten durch Lichess</span><a href="https://lichess.org/api" target="_blank" rel="noreferrer">Lichess API <ArrowUpRight size={12}/></a></footer>
+      <footer className="premium-footer"><span>OPENBOARD</span><span>Unabhängiger Client · Spielbetrieb und Kontodaten durch Lichess</span><a href={appPath("/features/about/")}>Lichess API <ArrowUpRight size={12}/></a></footer>
     </main>
   </div>;
 }
