@@ -155,7 +155,7 @@ export default function FeatureClient({section}:{section:string}){
   const puzzleBoard=useMemo(()=>puzzleFen?new Chess(puzzleFen):new Chess(),[puzzleFen]);
 
   async function searchPlayer(event:FormEvent){event.preventDefault();const name=searchName.trim();if(!name)return;setLoading(true);setError("");try{const response=await fetch(LICHESS+"/api/user/"+encodeURIComponent(name),{headers:{Accept:"application/json"}});if(!response.ok)throw new Error("Spieler nicht gefunden.");const player=await response.json() as Player;setPlayers([player]);}catch(e){setError(e instanceof Error?e.message:"Suche fehlgeschlagen.");}finally{setLoading(false);}}
-  async function challenge(name:string){const token=getAccessToken();if(!token){setError("Zum Herausfordern musst du dein Konto verbinden.");return;}setLoading(true);setError("");try{const response=await fetch(LICHESS+"/api/challenge/"+encodeURIComponent(name),{method:"POST",headers:{Authorization:"Bearer "+token,Accept:"application/json"}});if(!response.ok)throw new Error("Herausforderung fehlgeschlagen ("+response.status+").");setError("Herausforderung an "+name+" wurde erstellt.");}catch(e){setError(e instanceof Error?e.message:"Herausforderung fehlgeschlagen.");}finally{setLoading(false);}}
+  async function challenge(name:string){const token=getAccessToken();if(!token){setError("Zum Herausfordern musst du dein Konto verbinden.");return;}setLoading(true);setError("");try{const response=await fetch(LICHESS+"/api/challenge/"+encodeURIComponent(name),{method:"POST",headers:{Authorization:"Bearer "+token,"Content-Type":"application/x-www-form-urlencoded",Accept:"application/json"},body:new URLSearchParams({"clock.limit":"300","clock.increment":"0",rated:"false",variant:"standard"})});if(!response.ok)throw new Error("Herausforderung fehlgeschlagen ("+response.status+").");setError("Herausforderung an "+name+" wurde erstellt.");}catch(e){setError(e instanceof Error?e.message:"Herausforderung fehlgeschlagen.");}finally{setLoading(false);}}
   async function joinTournament(id:string){const token=getAccessToken();if(!token){setError("Zum Beitreten musst du dein Konto verbinden.");return;}setLoading(true);try{const response=await fetch(LICHESS+"/api/tournament/"+encodeURIComponent(id)+"/join",{method:"POST",headers:{Authorization:"Bearer "+token}});if(!response.ok)throw new Error("Beitritt fehlgeschlagen ("+response.status+").");setError("Turnier beigetreten.");}catch(e){setError(e instanceof Error?e.message:"Beitritt fehlgeschlagen.");}finally{setLoading(false);}}
   function puzzleClick(square:Square){
     if(!puzzle||!puzzleFen)return;
@@ -163,7 +163,18 @@ export default function FeatureClient({section}:{section:string}){
     const move=puzzleMove+square;
     const expected=puzzle.puzzle.solution[puzzleStep];
     if(move===expected){
-      const next=new Chess(puzzleFen);try{next.move({from:puzzleMove,to:square,promotion:"q"});setPuzzleFen(next.fen());setPuzzleStep(s=>s+1);setPuzzleMove(null);setPuzzleMessage(puzzleStep+1>=puzzle.puzzle.solution.length?"Puzzle gelöst. Gute Arbeit.":"Richtig – weiter geht's.");}catch{setPuzzleMove(null);}
+      const board=new Chess(puzzleFen);
+      try{
+        board.move({from:puzzleMove,to:square,promotion:"q"});
+        let nextStep=puzzleStep+1;
+        if(nextStep<puzzle.puzzle.solution.length){
+          const reply=puzzle.puzzle.solution[nextStep];
+          board.move({from:reply.slice(0,2) as Square,to:reply.slice(2,4) as Square,promotion:reply[4]||"q"});
+          nextStep+=1;
+        }
+        setPuzzleFen(board.fen());setPuzzleStep(nextStep);setPuzzleMove(null);
+        setPuzzleMessage(nextStep>=puzzle.puzzle.solution.length?"Puzzle gelöst. Gute Arbeit.":"Richtig – finde den nächsten Zug.");
+      }catch{setPuzzleMove(null);setPuzzleMessage("Dieser Zug konnte nicht ausgeführt werden.");}
     }else{setPuzzleMove(null);setPuzzleMessage("Nicht ganz. Prüfe die Stellung und versuche es erneut.");}
   }
   function gameOutcome(game:GameRow){if(game.status==="started")return"Läuft";if(!game.winner)return"Remis";const white=game.players?.white?.user?.name?.toLowerCase()===username.toLowerCase();return (game.winner===(white?"white":"black"))?"Sieg":"Niederlage";}
