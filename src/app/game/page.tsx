@@ -120,6 +120,8 @@ export default function GamePage() {
   }, [gameId]);
 
   useEffect(() => {
+    const savedTheme = window.localStorage.getItem("openboard-theme");
+    if (savedTheme === "light" || savedTheme === "dark") document.documentElement.dataset.theme = savedTheme;
     const params = new URLSearchParams(window.location.search);
     const id = params.get("gameId") || "";
     setGameId(id);
