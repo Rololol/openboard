@@ -156,7 +156,7 @@ export default function PlayPage() {
         <div className="match-summary"><span>Standard · Zufällige Farbe</span><span>{currentOption?.detail ?? "Rapid"}</span></div>
         {!searching ? <button className="find-button" onClick={startSearch}>Gegner suchen <span>→</span></button> : <button className="find-button cancel" onClick={cancelSearch}>Suche abbrechen</button>}
         <div className={error ? "search-status error" : "search-status"}><span className={searching ? "status-dot pulsing" : "status-dot"}/>{error || status}</div>
-        {gameId && <div className="found-game"><strong>Partie gefunden</strong><code>{gameId}</code><a href={"https://lichess.org/" + gameId} target="_blank" rel="noreferrer">Partie auf Lichess öffnen ↗</a><small>Die Partie läuft live über Lichess und wird in Openboard angezeigt.</small></div>}
+        {gameId && <div className="found-game"><strong>Partie gefunden</strong><code>{gameId}</code><a href={appPath("/game") + "?gameId=" + encodeURIComponent(gameId) + "&color=white"}>Partie in Openboard öffnen ↗</a><small>Die Partie läuft live über Lichess und wird in Openboard angezeigt.</small></div>}
       </section>
 
       <aside className="api-note"><strong>Warum nur Rapid und Klassisch?</strong><p>Lichess erlaubt die öffentliche Zufallssuche über die Board API für Rapid, Klassisch und Fernschach. Normale Blitz- und Bullet-Zufallssuche ist darüber nicht verfügbar. Openboard zeigt deshalb keine nicht unterstützten Modi an.</p></aside>
