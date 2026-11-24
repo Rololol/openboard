@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Chess, type Square } from "chess.js";
 import { Activity, ArrowLeft, ArrowRight, BarChart3, BookOpen, CalendarDays, Clock3, History, Home, Moon, Puzzle, Search, Settings2, ShieldCheck, Swords, Trophy, Users, Zap, Tv, UserRound, Sun } from "lucide-react";
 import { appPath, getAccessToken, lichessFetch } from "@/lib/lichess-client";
@@ -155,7 +155,7 @@ export default function FeatureClient({section}:{section:string}){
   const analysisBoard=useMemo(()=>new Chess(analysisFen),[analysisFen]);
   const puzzleBoard=useMemo(()=>puzzleFen?new Chess(puzzleFen):new Chess(),[puzzleFen]);
 
-  async function searchPlayer(event:React.FormEvent){event.preventDefault();const name=searchName.trim();if(!name)return;setLoading(true);setError("");try{const response=await fetch(LICHESS+"/api/user/"+encodeURIComponent(name),{headers:{Accept:"application/json"}});if(!response.ok)throw new Error("Spieler nicht gefunden.");const player=await response.json() as Player;setPlayers([player]);}catch(e){setError(e instanceof Error?e.message:"Suche fehlgeschlagen.");}finally{setLoading(false);}}
+  async function searchPlayer(event:FormEvent){event.preventDefault();const name=searchName.trim();if(!name)return;setLoading(true);setError("");try{const response=await fetch(LICHESS+"/api/user/"+encodeURIComponent(name),{headers:{Accept:"application/json"}});if(!response.ok)throw new Error("Spieler nicht gefunden.");const player=await response.json() as Player;setPlayers([player]);}catch(e){setError(e instanceof Error?e.message:"Suche fehlgeschlagen.");}finally{setLoading(false);}}
   async function challenge(name:string){const token=getAccessToken();if(!token){setError("Zum Herausfordern musst du dein Konto verbinden.");return;}setLoading(true);setError("");try{const response=await fetch(LICHESS+"/api/challenge/"+encodeURIComponent(name),{method:"POST",headers:{Authorization:"Bearer "+token,Accept:"application/json"}});if(!response.ok)throw new Error("Herausforderung fehlgeschlagen ("+response.status+").");setError("Herausforderung an "+name+" wurde erstellt.");}catch(e){setError(e instanceof Error?e.message:"Herausforderung fehlgeschlagen.");}finally{setLoading(false);}}
   async function joinTournament(id:string){const token=getAccessToken();if(!token){setError("Zum Beitreten musst du dein Konto verbinden.");return;}setLoading(true);try{const response=await fetch(LICHESS+"/api/tournament/"+encodeURIComponent(id)+"/join",{method:"POST",headers:{Authorization:"Bearer "+token}});if(!response.ok)throw new Error("Beitritt fehlgeschlagen ("+response.status+").");setError("Turnier beigetreten.");}catch(e){setError(e instanceof Error?e.message:"Beitritt fehlgeschlagen.");}finally{setLoading(false);}}
   function puzzleClick(square:Square){
