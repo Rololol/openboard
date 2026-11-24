@@ -54,7 +54,6 @@ export default function FeatureClient({section}:{section:string}){
   const [tvChannels,setTvChannels]=useState<string[]>([]);
   const [tvChannel,setTvChannel]=useState("best"); const [tvGameId,setTvGameId]=useState(""); const [puzzleStartFen,setPuzzleStartFen]=useState("");
   const [storm,setStorm]=useState<Record<string,unknown>|null>(null);
-  const [following,setFollowing]=useState(false);
 
   useEffect(()=>{
     const saved=window.localStorage.getItem("openboard-theme");
