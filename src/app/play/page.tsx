@@ -20,6 +20,11 @@ export default function PlayPage() {
   const eventController = useRef<AbortController | null>(null);
   const seekController = useRef<AbortController | null>(null);
 
+  useEffect(() => {
+    const savedTheme = window.localStorage.getItem("openboard-theme");
+    if (savedTheme === "light" || savedTheme === "dark") document.documentElement.dataset.theme = savedTheme;
+  }, []);
+
   useEffect(() => () => {
     eventController.current?.abort();
     seekController.current?.abort();
