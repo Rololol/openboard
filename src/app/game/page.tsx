@@ -1,6 +1,7 @@
 "use client";
 
 import { Chess, type Square } from "chess.js";
+import { Moon, Sun } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { appPath, getAccessToken, lichessFetch, lichessJson } from "@/lib/lichess-client";
 
@@ -41,6 +42,7 @@ function getNotation(initialFen: string | undefined, moves: string) {
 }
 
 export default function GamePage() {
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [gameId, setGameId] = useState("");
   const [orientation, setOrientation] = useState<"white" | "black">("white");
   const [full, setFull] = useState<GameFull | null>(null);
@@ -121,7 +123,7 @@ export default function GamePage() {
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem("openboard-theme");
-    if (savedTheme === "light" || savedTheme === "dark") document.documentElement.dataset.theme = savedTheme;
+    if (savedTheme === "light" || savedTheme === "dark") { document.documentElement.dataset.theme = savedTheme; setTheme(savedTheme); }
     const params = new URLSearchParams(window.location.search);
     const id = params.get("gameId") || "";
     setGameId(id);
@@ -143,6 +145,8 @@ export default function GamePage() {
     void consumeStream();
     return () => streamRef.current?.abort();
   }, [consumeStream]);
+
+  function toggleTheme() { const next = theme === "dark" ? "light" : "dark"; setTheme(next); document.documentElement.dataset.theme = next; window.localStorage.setItem("openboard-theme", next); }
 
   async function sendMove(from: Square, to: Square, promotion?: string) {
     const current = new Chess(fen);
@@ -244,7 +248,7 @@ export default function GamePage() {
   void clockTick;
 
   return <div className="game-page">
-    <header className="game-topbar"><a href={appPath("/play")}>← Spielsuche</a><span>OPENBOARD <i/> LIVE-PARTIE</span><a href={appPath("/")}>Dashboard</a></header>
+    <header className="game-topbar"><a href={appPath("/play")}>← Spielsuche</a><span>OPENBOARD <i/> LIVE-PARTIE</span><div className="game-topbar-actions"><button className="route-theme-toggle" onClick={toggleTheme} aria-label={theme === "dark" ? "Helles Theme aktivieren" : "Dunkles Theme aktivieren"}>{theme === "dark" ? <Sun size={17}/> : <Moon size={17}/>}</button><a href={appPath("/")}>Dashboard</a></div></header>
     <main className="game-layout">
       <section className="board-column">
         <div className="player-bar opponent-bar"><span className="player-avatar">{opponent?.name?.slice(0,1).toUpperCase() || "?"}</span><div><strong>{opponent?.name || "Gegner"}</strong><small>{opponent?.rating ? opponent.rating + " Elo" : "Lichess-Spieler"}</small></div><strong className="clock">{formatClock(opponentTime ?? 0)}</strong></div>
