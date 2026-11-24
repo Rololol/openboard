@@ -100,3 +100,8 @@ html[data-theme="dark"]{color-scheme:dark}
 @media(max-width:900px){.game-layout{grid-template-columns:minmax(0,1fr)!important;max-width:720px!important}.game-sidebar{display:flex}.live-board{max-height:none!important}}
 @media(max-width:640px){.play-page,.game-page{padding-left:12px!important;padding-right:12px!important;padding-bottom:28px!important}.play-header,.game-topbar{height:62px!important}.play-header:before,.game-topbar:before{font-size:15px}.play-header .eyebrow{font-size:7px!important}.play-content{margin:35px auto 0!important}.match-card,.api-note{padding:17px!important}.time-options{gap:7px!important}.time-option{padding:12px 8px!important;min-height:74px}.time-option strong{font-size:15px}.game-layout{margin-top:12px!important;gap:12px!important}.game-sidebar{padding:14px!important}.player-bar{height:48px!important}.live-board{border-width:3px!important}.piece{font-size:clamp(28px,9vw,52px)!important}.auth-callback-card{padding:25px!important}}
 @media(max-width:370px){.play-header:before,.game-topbar:before{font-size:13px}.play-header .eyebrow{display:none}.time-option strong{font-size:13px}.game-topbar span{font-size:7px!important}}
+
+.route-theme-toggle{width:36px;height:36px;flex:0 0 36px;border:1px solid var(--ob-line);border-radius:9px;background:var(--ob-panel);color:var(--ob-muted);display:grid;place-items:center;cursor:pointer}
+.route-theme-toggle:hover{color:var(--ob-green);border-color:var(--ob-green)}
+.game-topbar-actions{display:flex;align-items:center;gap:14px}
+@media(max-width:640px){.route-theme-toggle{width:33px;height:33px;flex-basis:33px}.game-topbar-actions{gap:9px}}
