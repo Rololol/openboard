@@ -17,12 +17,15 @@ const pages: Record<string,PageDef> = {
   profile:{title:"Spielerprofil",kicker:"DEIN SCHACH",description:"Wertungen, Statistiken und Kontodaten aus deinem Lichess-Konto – in Openboard dargestellt.",icon:UserRound},
   history:{title:"Spielhistorie",kicker:"DEINE PARTIEN",description:"Deine letzten Partien mit Ergebnis und direktem Einstieg in die Analyse.",icon:History},
   settings:{title:"Einstellungen",kicker:"OPENBOARD ANPASSEN",description:"Passe Darstellung und Bedienung deiner Schachoberfläche an.",icon:Settings2},
-  about:{title:"Über Openboard",kicker:"UNABHÄNGIGER CLIENT",description:"Eine eigenständige Schachoberfläche mit Lichess als Spiel- und Kontoinfrastruktur.",icon:ShieldCheck},\n  openings:{title:"Eröffnungs-Explorer",kicker:"ERÖFFNUNGEN",description:"Erkunde Zugfolgen anhand der Lichess-Meisterpartien-Datenbank und baue deine Eröffnungskenntnisse aus.",icon:BookOpen},
+  about:{title:"Über Openboard",kicker:"UNABHÄNGIGER CLIENT",description:"Eine eigenständige Schachoberfläche mit Lichess als Spiel- und Kontoinfrastruktur.",icon:ShieldCheck},
+  openings:{title:"Eröffnungs-Explorer",kicker:"ERÖFFNUNGEN",description:"Erkunde Zugfolgen anhand der Lichess-Meisterpartien-Datenbank und baue deine Eröffnungskenntnisse aus.",icon:BookOpen},
 };
 type PuzzleData={puzzle:{id:string;rating:number;plays:number;solution:string[];initialPly:number};game:{pgn:string;clock?:string}};
 type Tournament={id:string;fullName?:string;minutes?:number;seconds?:number;nbPlayers?:number;isStarted?:boolean;startsAt?:number;finishesAt?:number;variant?:{name?:string}};
 type Player={id:string;username?:string;online?:boolean;perfs?:Record<string,{rating?:number}>;title?:string};
-type OpeningMove={uci:string;san:string;white:number;draws:number;black:number;averageRating?:number};\ntype OpeningData={opening?:{eco?:string;name?:string};moves:OpeningMove[]};\ntype GameRow={id:string;createdAt?:number;lastMoveAt?:number;status?:string;winner?:string;speed?:string;players?:{white?:{user?:{name?:string};rating?:number};black?:{user?:{name?:string};rating?:number}}};
+type OpeningMove={uci:string;san:string;white:number;draws:number;black:number;averageRating?:number};
+type OpeningData={opening?:{eco?:string;name?:string};moves:OpeningMove[]};
+type GameRow={id:string;createdAt?:number;lastMoveAt?:number;status?:string;winner?:string;speed?:string;players?:{white?:{user?:{name?:string};rating?:number};black?:{user?:{name?:string};rating?:number}}};
 const LICHESS="https://lichess.org";
 const pieceGlyph:Record<string,string>={wk:"♔",wq:"♕",wr:"♖",wb:"♗",wn:"♘",wp:"♙",bk:"♚",bq:"♛",br:"♜",bb:"♝",bn:"♞",bp:"♟"};
 
@@ -30,7 +33,8 @@ async function readNdjson<T>(url:string,token?:string):Promise<T[]>{
   const response=await fetch(url,{headers:{Accept:"application/x-ndjson",...(token?{Authorization:"Bearer "+token}:{})},cache:"no-store"});
   if(!response.ok)throw new Error("Daten konnten nicht geladen werden ("+response.status+").");
   const body=await response.text();
-  return body.split("\n").filter(Boolean).map(line=>JSON.parse(line) as T);
+  return body.split("
+").filter(Boolean).map(line=>JSON.parse(line) as T);
 }
 
 export default function FeatureClient({section}:{section:string}){
@@ -48,7 +52,9 @@ export default function FeatureClient({section}:{section:string}){
   const [puzzleMove,setPuzzleMove]=useState<Square|null>(null);
   const [puzzleStep,setPuzzleStep]=useState(0);
   const [puzzleMessage,setPuzzleMessage]=useState("");
-  const [pgn,setPgn]=useState("");\n  const [openingFen,setOpeningFen]=useState(new Chess().fen());\n  const [openingData,setOpeningData]=useState<OpeningData|null>(null);
+  const [pgn,setPgn]=useState("");
+  const [openingFen,setOpeningFen]=useState(new Chess().fen());
+  const [openingData,setOpeningData]=useState<OpeningData|null>(null);
   const [analysisGame,setAnalysisGame]=useState("");
   const [analysisIndex,setAnalysisIndex]=useState(0);
   const [tvChannels,setTvChannels]=useState<string[]>([]);
@@ -91,7 +97,8 @@ export default function FeatureClient({section}:{section:string}){
           if(!token)throw new Error("Melde dich über das Dashboard an, um deine Freundesliste zu laden.");
           const response=await fetch(LICHESS+"/api/rel/following",{headers:{Authorization:"Bearer "+token,Accept:"application/x-ndjson"},cache:"no-store"});
           if(!response.ok)throw new Error(response.status===403?"Für die Freundesliste ist eine erneute Kontofreigabe erforderlich.":"Freundesliste konnte nicht geladen werden.");
-          const body=await response.text();const list=body.split("\n").filter(Boolean).map(line=>JSON.parse(line) as Player);
+          const body=await response.text();const list=body.split("
+").filter(Boolean).map(line=>JSON.parse(line) as Player);
           if(active)setPlayers(list);
         }else if(section==="profile"){
           const token=getAccessToken();const name=userFromUrl()||"";
@@ -119,7 +126,9 @@ export default function FeatureClient({section}:{section:string}){
           const response=await fetch(LICHESS+"/api/storm/dashboard/"+encodeURIComponent(account.username),{headers:{Accept:"application/json"}});
           if(!response.ok)throw new Error("Storm-Statistik konnte nicht geladen werden.");
           if(active)setStorm(await response.json() as Record<string,unknown>);
-        }else if(section==="openings"){\n          setOpeningFen(new Chess().fen());\n        }else if(section==="analysis"&&gameIdFromUrl()){
+        }else if(section==="openings"){
+          setOpeningFen(new Chess().fen());
+        }else if(section==="analysis"&&gameIdFromUrl()){
           const id=gameIdFromUrl()!;
           const response=await fetch(LICHESS+"/game/export/"+encodeURIComponent(id),{headers:{Accept:"application/x-chess-pgn"}});
           if(!response.ok)throw new Error("Partie konnte nicht geladen werden.");
