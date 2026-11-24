@@ -33,8 +33,7 @@ async function readNdjson<T>(url:string,token?:string):Promise<T[]>{
   const response=await fetch(url,{headers:{Accept:"application/x-ndjson",...(token?{Authorization:"Bearer "+token}:{})},cache:"no-store"});
   if(!response.ok)throw new Error("Daten konnten nicht geladen werden ("+response.status+").");
   const body=await response.text();
-  return body.split("
-").filter(Boolean).map(line=>JSON.parse(line) as T);
+  return body.split("\\n").filter(Boolean).map(line=>JSON.parse(line) as T);
 }
 
 export default function FeatureClient({section}:{section:string}){
@@ -97,8 +96,7 @@ export default function FeatureClient({section}:{section:string}){
           if(!token)throw new Error("Melde dich über das Dashboard an, um deine Freundesliste zu laden.");
           const response=await fetch(LICHESS+"/api/rel/following",{headers:{Authorization:"Bearer "+token,Accept:"application/x-ndjson"},cache:"no-store"});
           if(!response.ok)throw new Error(response.status===403?"Für die Freundesliste ist eine erneute Kontofreigabe erforderlich.":"Freundesliste konnte nicht geladen werden.");
-          const body=await response.text();const list=body.split("
-").filter(Boolean).map(line=>JSON.parse(line) as Player);
+          const body=await response.text();const list=body.split("\\n").filter(Boolean).map(line=>JSON.parse(line) as Player);
           if(active)setPlayers(list);
         }else if(section==="profile"){
           const token=getAccessToken();const name=userFromUrl()||"";
