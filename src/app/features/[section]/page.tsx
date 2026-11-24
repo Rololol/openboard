@@ -1,6 +1,6 @@
 import FeatureClient from "./feature-client";
 
-const sections = ["tournaments","friends","puzzles","storm","learn","analysis","tv","profile","history","settings","about"];
+const sections = ["tournaments","friends","puzzles","storm","learn","analysis","tv","profile","history","settings","about","openings"];
 
 export function generateStaticParams() {
   return sections.map((section) => ({ section }));
