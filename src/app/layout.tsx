@@ -3,8 +3,8 @@ import "./globals.css";
 import "./premium-dashboard.css";
 
 export const metadata: Metadata = {
-  title: "Openboard — Dein Premium-Schachclient",
-  description: "Ein moderner, unabhängiger Schachclient auf Basis der offiziellen Lichess-Infrastruktur.",
+  title: "Openboard — Play Chess Online",
+  description: "Spiele Schach online, trainiere Taktik und analysiere deine Partien mit Openboard."
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
