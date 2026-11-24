@@ -37,6 +37,11 @@ const navGroups = [
     { label: "Lernen", href: "/features/learn/", icon: BookOpen, internal: true },
     { label: "Analyse", href: "/features/analysis/", icon: BarChart3, internal: true },
   ]},
+  { label: "MEIN BEREICH", items: [
+    { label: "Spielhistorie", href: "/features/history/", icon: History, internal: true },
+    { label: "Spielerprofil", href: "/features/profile/", icon: Users, internal: true },
+    { label: "Schach-TV", href: "/features/tv/", icon: Activity, internal: true },
+  ]},
 ];
 
 function gameResult(game: Game, accountName?: string) {
