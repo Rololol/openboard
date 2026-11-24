@@ -105,3 +105,74 @@ html[data-theme="dark"]{color-scheme:dark}
 .route-theme-toggle:hover{color:var(--ob-green);border-color:var(--ob-green)}
 .game-topbar-actions{display:flex;align-items:center;gap:14px}
 @media(max-width:640px){.route-theme-toggle{width:33px;height:33px;flex-basis:33px}.game-topbar-actions{gap:9px}}
+
+
+/* Mobile polish: safe areas, touch targets and compact game controls */
+@media(max-width:640px){
+  .premium-shell{padding-bottom:calc(68px + env(safe-area-inset-bottom))}
+  .premium-sidebar{height:calc(64px + env(safe-area-inset-bottom));padding-bottom:max(5px,env(safe-area-inset-bottom))}
+  .premium-nav-item{min-height:48px}
+  .premium-main{padding-left:max(13px,env(safe-area-inset-left));padding-right:max(13px,env(safe-area-inset-right))}
+  .premium-topbar{gap:9px}
+  .premium-topbar p{line-height:1.45}
+  .topbar-actions{flex-shrink:0}
+  .premium-hero{grid-template-columns:minmax(0,1fr) 104px}
+  .hero-copy{min-width:0}
+  .hero-board-wrap{width:104px}
+  .quick-play-card{min-width:0}
+  .quick-play-card strong{line-height:1.1}
+  .play-page,.game-page{padding-left:max(12px,env(safe-area-inset-left))!important;padding-right:max(12px,env(safe-area-inset-right))!important}
+  .play-page{padding-bottom:calc(30px + env(safe-area-inset-bottom))!important}
+  .play-header,.game-topbar{gap:8px}
+  .game-topbar:before{font-size:14px}
+  .game-topbar span{white-space:nowrap}
+  .game-topbar-actions{gap:7px}
+  .game-topbar-actions>a{font-size:10px!important}
+  .game-layout{width:100%;max-width:560px!important}
+  .board-column{width:100%;min-width:0}
+  .player-bar{min-height:48px}
+  .player-bar strong{font-size:12px}
+  .clock{min-width:69px;padding:6px 8px;font-size:16px!important}
+  .live-board{width:100%;max-width:min(100%,calc(100vw - 24px));margin-inline:auto;aspect-ratio:1;touch-action:manipulation}
+  .piece{font-size:clamp(30px,8.7vw,54px)!important}
+  .rank-label,.file-label{font-size:9px}
+  .game-sidebar{gap:12px}
+  .game-status{font-size:12px}
+  .move-list{min-width:0}
+  .move-notation{max-height:112px;gap:8px 12px}
+  .game-chat input{font-size:16px!important;min-height:42px}
+  .game-chat form button{min-width:66px;min-height:42px}
+  .draw-button,.resign-button{min-height:44px}
+  .draw-offer button{min-height:40px}
+  .find-button{min-height:52px}
+  .time-option{min-height:78px}
+  .api-note{line-height:1.55}
+}
+@media(max-width:390px){
+  .premium-topbar h1{font-size:21px}
+  .premium-topbar p{max-width:190px}
+  .premium-hero{grid-template-columns:minmax(0,1fr) 88px;padding:17px 12px}
+  .hero-board-wrap{width:88px}
+  .premium-hero h2{font-size:29px}
+  .hero-square{font-size:11px}
+  .quick-play-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .quick-play-card{min-height:100px}
+  .play-header:before,.game-topbar:before{font-size:12px}
+  .game-topbar span{font-size:6px!important;letter-spacing:.8px}
+  .game-topbar-actions{gap:5px}
+  .game-topbar-actions>a{font-size:9px!important}
+  .route-theme-toggle{width:31px;height:31px;flex-basis:31px}
+  .match-card{padding:14px!important}
+  .time-options{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .time-option{padding:11px 7px!important}
+  .time-option strong{font-size:13px}
+  .time-option span{font-size:9px}
+  .clock{min-width:62px;font-size:15px!important}
+}
+@media(max-width:640px) and (orientation:landscape){
+  .game-layout{max-width:920px!important;grid-template-columns:minmax(0,1.15fr) minmax(230px,.85fr)!important;align-items:start}
+  .game-sidebar{max-height:calc(100svh - 82px);overflow:auto}
+  .live-board{max-width:min(100%,calc(100svh - 155px))}
+  .player-bar{height:39px!important;min-height:39px}
+  .piece{font-size:clamp(22px,5.5vh,42px)!important}
+}
