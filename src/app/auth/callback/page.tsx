@@ -8,6 +8,8 @@ export default function AuthCallbackPage() {
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
+    const savedTheme = window.localStorage.getItem("openboard-theme");
+    if (savedTheme === "light" || savedTheme === "dark") document.documentElement.dataset.theme = savedTheme;
     let active = true;
     void completeLichessLogin().then(() => {
       if (!active) return;
