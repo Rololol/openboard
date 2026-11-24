@@ -134,6 +134,16 @@ export default function FeatureClient({section}:{section:string}){
     void load();return()=>{active=false;};
   },[section]);
 
+  useEffect(()=>{
+    if(section!=="tv"||!tvChannel)return;
+    let active=true;
+    fetch(LICHESS+"/api/tv/"+encodeURIComponent(tvChannel),{headers:{Accept:"application/json"},cache:"no-store"})
+      .then(response=>{if(!response.ok)throw new Error("TV-Kanal nicht verfügbar.");return response.json() as Promise<{champion?:{gameId?:string};game?:{id?:string}}>;})
+      .then(data=>{if(active)setTvGameId(data.champion?.gameId||data.game?.id||"");})
+      .catch(()=>{if(active)setTvGameId("");});
+    return()=>{active=false;};
+  },[section,tvChannel]);
+
   const parsedAnalysis=useMemo(()=>{
     if(!pgn)return {moves:[] as string[],fen:""};
     try{const chess=new Chess();chess.loadPgn(pgn);return {moves:chess.history(),fen:chess.fen()};}catch{return {moves:[] as string[],fen:""};}
