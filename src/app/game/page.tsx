@@ -283,7 +283,7 @@ export default function GamePage() {
         {gameState?.status === "started" && notation.length > 0 && !(orientation === "white" ? gameState.wtakeback : gameState.btakeback) && !(orientation === "white" ? gameState.btakeback : gameState.wtakeback) ? <button className="draw-button" onClick={() => void takebackAction("offer")} disabled={busy}>Zug zurücknehmen lassen</button> : null}
         {actionMessage && <div className="action-message">{actionMessage}</div>}
         <button className="resign-button" onClick={resign} disabled={busy || gameState?.status !== "started"}>Partie aufgeben</button>
-        <a className="lichess-link" href={"https://lichess.org/" + gameId} target="_blank" rel="noreferrer">Auf Lichess ansehen ↗</a>
+        <a className="lichess-link" href={appPath("/features/analysis") + "?gameId=" + encodeURIComponent(gameId)}>Partie analysieren ↗</a>
         <small className="fair-play">Keine Engine-Hilfe während einer laufenden Partie. Lichess-Fair-Play-Regeln gelten.</small>
       </aside>
     </main>
