@@ -17,12 +17,12 @@ const pages: Record<string,PageDef> = {
   profile:{title:"Spielerprofil",kicker:"DEIN SCHACH",description:"Wertungen, Statistiken und Kontodaten aus deinem Lichess-Konto – in Openboard dargestellt.",icon:UserRound},
   history:{title:"Spielhistorie",kicker:"DEINE PARTIEN",description:"Deine letzten Partien mit Ergebnis und direktem Einstieg in die Analyse.",icon:History},
   settings:{title:"Einstellungen",kicker:"OPENBOARD ANPASSEN",description:"Passe Darstellung und Bedienung deiner Schachoberfläche an.",icon:Settings2},
-  about:{title:"Über Openboard",kicker:"UNABHÄNGIGER CLIENT",description:"Eine eigenständige Schachoberfläche mit Lichess als Spiel- und Kontoinfrastruktur.",icon:ShieldCheck},
+  about:{title:"Über Openboard",kicker:"UNABHÄNGIGER CLIENT",description:"Eine eigenständige Schachoberfläche mit Lichess als Spiel- und Kontoinfrastruktur.",icon:ShieldCheck},\n  openings:{title:"Eröffnungs-Explorer",kicker:"ERÖFFNUNGEN",description:"Erkunde Zugfolgen anhand der Lichess-Meisterpartien-Datenbank und baue deine Eröffnungskenntnisse aus.",icon:BookOpen},
 };
 type PuzzleData={puzzle:{id:string;rating:number;plays:number;solution:string[];initialPly:number};game:{pgn:string;clock?:string}};
 type Tournament={id:string;fullName?:string;minutes?:number;seconds?:number;nbPlayers?:number;isStarted?:boolean;startsAt?:number;finishesAt?:number;variant?:{name?:string}};
 type Player={id:string;username?:string;online?:boolean;perfs?:Record<string,{rating?:number}>;title?:string};
-type GameRow={id:string;createdAt?:number;lastMoveAt?:number;status?:string;winner?:string;speed?:string;players?:{white?:{user?:{name?:string};rating?:number};black?:{user?:{name?:string};rating?:number}}};
+type OpeningMove={uci:string;san:string;white:number;draws:number;black:number;averageRating?:number};\ntype OpeningData={opening?:{eco?:string;name?:string};moves:OpeningMove[]};\ntype GameRow={id:string;createdAt?:number;lastMoveAt?:number;status?:string;winner?:string;speed?:string;players?:{white?:{user?:{name?:string};rating?:number};black?:{user?:{name?:string};rating?:number}}};
 const LICHESS="https://lichess.org";
 const pieceGlyph:Record<string,string>={wk:"♔",wq:"♕",wr:"♖",wb:"♗",wn:"♘",wp:"♙",bk:"♚",bq:"♛",br:"♜",bb:"♝",bn:"♞",bp:"♟"};
 
@@ -48,7 +48,7 @@ export default function FeatureClient({section}:{section:string}){
   const [puzzleMove,setPuzzleMove]=useState<Square|null>(null);
   const [puzzleStep,setPuzzleStep]=useState(0);
   const [puzzleMessage,setPuzzleMessage]=useState("");
-  const [pgn,setPgn]=useState("");
+  const [pgn,setPgn]=useState("");\n  const [openingFen,setOpeningFen]=useState(new Chess().fen());\n  const [openingData,setOpeningData]=useState<OpeningData|null>(null);
   const [analysisGame,setAnalysisGame]=useState("");
   const [analysisIndex,setAnalysisIndex]=useState(0);
   const [tvChannels,setTvChannels]=useState<string[]>([]);
@@ -119,7 +119,7 @@ export default function FeatureClient({section}:{section:string}){
           const response=await fetch(LICHESS+"/api/storm/dashboard/"+encodeURIComponent(account.username),{headers:{Accept:"application/json"}});
           if(!response.ok)throw new Error("Storm-Statistik konnte nicht geladen werden.");
           if(active)setStorm(await response.json() as Record<string,unknown>);
-        }else if(section==="analysis"&&gameIdFromUrl()){
+        }else if(section==="openings"){\n          setOpeningFen(new Chess().fen());\n        }else if(section==="analysis"&&gameIdFromUrl()){
           const id=gameIdFromUrl()!;
           const response=await fetch(LICHESS+"/game/export/"+encodeURIComponent(id),{headers:{Accept:"application/x-chess-pgn"}});
           if(!response.ok)throw new Error("Partie konnte nicht geladen werden.");
@@ -142,6 +142,16 @@ export default function FeatureClient({section}:{section:string}){
       .catch(()=>{if(active)setTvGameId("");});
     return()=>{active=false;};
   },[section,tvChannel]);
+
+  useEffect(()=>{
+    if(section!=="openings")return;
+    let active=true;
+    fetch("https://explorer.lichess.ovh/masters?fen="+encodeURIComponent(openingFen)+"&moves=12&topGames=0&recentGames=0",{headers:{Accept:"application/json"},cache:"no-store"})
+      .then(response=>{if(!response.ok)throw new Error("Eröffnungsdaten konnten nicht geladen werden.");return response.json() as Promise<OpeningData>;})
+      .then(data=>{if(active)setOpeningData(data);})
+      .catch(cause=>{if(active)setError(cause instanceof Error?cause.message:"Eröffnungsdaten nicht verfügbar.");});
+    return()=>{active=false;};
+  },[section,openingFen]);
 
   const parsedAnalysis=useMemo(()=>{
     if(!pgn)return {moves:[] as string[],fen:""};
@@ -179,7 +189,7 @@ export default function FeatureClient({section}:{section:string}){
   }
   function gameOutcome(game:GameRow){if(game.status==="started")return"Läuft";if(!game.winner)return"Remis";const white=game.players?.white?.user?.name?.toLowerCase()===username.toLowerCase();return (game.winner===(white?"white":"black"))?"Sieg":"Niederlage";}
 
-  const nav=[["Übersicht","/",Home],["Spielen","/play/",Swords],["Turniere","/features/tournaments/",Trophy],["Freunde","/features/friends/",Users],["Puzzles","/features/puzzles/",Puzzle],["Storm","/features/storm/",Zap],["Lernen","/features/learn/",BookOpen],["Analyse","/features/analysis/",BarChart3],["TV","/features/tv/",Tv],["Profil","/features/profile/",UserRound],["Historie","/features/history/",History],["Einstellungen","/features/settings/",Settings2]] as const;
+  const nav=[["Übersicht","/",Home],["Spielen","/play/",Swords],["Turniere","/features/tournaments/",Trophy],["Freunde","/features/friends/",Users],["Puzzles","/features/puzzles/",Puzzle],["Storm","/features/storm/",Zap],["Lernen","/features/learn/",BookOpen],["Analyse","/features/analysis/",BarChart3],["TV","/features/tv/",Tv],["Profil","/features/profile/",UserRound],["Historie","/features/history/",History],["Einstellungen","/features/settings/",Settings2],["Eröffnungen","/features/openings/",BookOpen]] as const;
 
   return <div className="feature-app">
     <aside className="feature-sidebar"><a className="feature-brand" href={appPath("/")}><span className="premium-brand-mark">O</span><span>openboard</span></a><div className="feature-nav-label">SPIELZENTRUM</div>{nav.map(([label,href,NavIcon])=><a key={href} href={appPath(href)} className={"feature-nav-item "+((href==="/features/"+section+"/")?"active":"")}><NavIcon size={17}/><span>{label}</span></a>)}<div className="feature-sidebar-bottom"><ShieldCheck size={15}/> Lichess-Infrastruktur</div></aside>
@@ -198,6 +208,7 @@ export default function FeatureClient({section}:{section:string}){
         {section==="tv"&&<section className="feature-panel"><div className="feature-panel-head"><strong>Live-Kanäle</strong><span>{tvChannels.length} Kanäle</span></div><div className="feature-channel-grid">{tvChannels.map(channel=><button key={channel} className={tvChannel===channel?"selected":""} onClick={()=>setTvChannel(channel)}>{channel.replace(/([A-Z])/g," $1").toUpperCase()}</button>)}</div><div className="feature-tv-current"><strong>{tvGameId?"Live-Partie verfügbar":"Kanal ausgewählt"}</strong><p className="feature-muted">{tvGameId?"Die Partie kann direkt im Openboard-Analysebrett geöffnet werden.":"Für diesen Kanal wird gerade keine Partie-ID bereitgestellt."}</p>{tvGameId&&<a className="feature-action" href={appPath("/features/analysis/")+"?gameId="+encodeURIComponent(tvGameId)}>Partie in Openboard öffnen <ArrowRight size={15}/></a>}</div></section>}
         {section==="storm"&&<section className="feature-panel"><div className="feature-panel-head"><strong>Deine Puzzle-Storm-Statistik</strong><span>LIVE-DATEN</span></div>{storm?<pre className="feature-json">{JSON.stringify(storm,null,2)}</pre>:<p className="feature-muted">Verbinde dein Konto, um deine Bestwerte und deinen Trainingsverlauf zu laden.</p>}<a className="feature-action" href={appPath("/features/puzzles/")}>Taktik trainieren <ArrowRight size={15}/></a></section>}
         {section==="learn"&&<section className="feature-panel"><div className="feature-panel-head"><strong>Lernzentrum</strong><span>TRAININGSBEREICHE</span></div><div className="feature-learning-grid"><a href={appPath("/features/puzzles/")}><Puzzle/> <strong>Taktik</strong><small>Motive erkennen und Kombinationen berechnen</small></a><a href={appPath("/features/analysis/")}><BarChart3/> <strong>Partieanalyse</strong><small>Eigene Züge verstehen und verbessern</small></a><a href={appPath("/features/tv/")}><Tv/> <strong>Meisterpartien</strong><small>Starke Spieler live beobachten</small></a></div></section>}
+        {section==="openings"&&<section className="feature-panel"><div className="feature-panel-head"><strong>{openingData?.opening?.name||"Ausgangsstellung"}</strong><span>{openingData?.opening?.eco||"MEISTERPARTIEN"}</span></div><div className="opening-position"><code>{openingFen}</code><button className="feature-action secondary" onClick={()=>setOpeningFen(new Chess().fen())}>Zurück zum Anfang</button></div>{openingData?.moves?.length?openingData.moves.map(move=><button className="opening-move-row" key={move.uci} onClick={()=>{const board=new Chess(openingFen);try{board.move({from:move.uci.slice(0,2) as Square,to:move.uci.slice(2,4) as Square,promotion:move.uci[4]||"q"});setOpeningFen(board.fen());}catch{setError("Zug konnte nicht angewendet werden.");}}}><strong>{move.san}</strong><span>{move.white} Siege</span><span>{move.draws} Remis</span><span>{move.black} Niederlagen</span><ArrowRight size={14}/></button>):!loading&&!error?<p className="feature-muted">Für diese Stellung liegen keine Meisterpartien vor.</p>:null}</section>}
         {section==="settings"&&<section className="feature-panel"><div className="feature-panel-head"><strong>Darstellung</strong><span>LOKAL GESPEICHERT</span></div><div className="feature-data-row"><div className="feature-row-main"><strong>Farbschema</strong><small>Wird für alle Openboard-Seiten übernommen.</small></div><button className="feature-action" onClick={toggleTheme}>{theme==="dark"?"Helles Design":"Dunkles Design"}</button></div><div className="feature-data-row"><div className="feature-row-main"><strong>Kontoverbindung</strong><small>Die Spiel- und Kontodaten werden von Lichess bereitgestellt.</small></div><a className="feature-action secondary" href={appPath("/")}>Konto verwalten</a></div></section>}
         {section==="about"&&<section className="feature-panel"><div className="feature-panel-head"><strong>Openboard</strong><span>UNABHÄNGIGER CLIENT</span></div><p className="feature-muted">Openboard entwickelt eine eigenständige, durchgängige Schachoberfläche. Lichess bleibt die technische Basis für Konten, Spielbetrieb und öffentliche Schachdaten. Die Bedienung und Navigation erfolgen innerhalb von Openboard.</p></section>}
         <section className="feature-shortcuts"><a href={appPath("/play/")}><Swords size={17}/> Partie starten <ArrowRight size={14}/></a><a href={appPath("/features/analysis/")}><BarChart3 size={17}/> Analyse <ArrowRight size={14}/></a><a href={appPath("/features/history/")}><CalendarDays size={17}/> Spielhistorie <ArrowRight size={14}/></a></section>
