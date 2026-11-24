@@ -36,6 +36,7 @@ const navGroups = [
     { label: "Puzzle Storm", href: "/features/storm/", icon: Zap, internal: true },
     { label: "Lernen", href: "/features/learn/", icon: BookOpen, internal: true },
     { label: "Analyse", href: "/features/analysis/", icon: BarChart3, internal: true },
+    { label: "Eröffnungen", href: "/features/openings/", icon: BookOpen, internal: true },
   ]},
   { label: "MEIN BEREICH", items: [
     { label: "Spielhistorie", href: "/features/history/", icon: History, internal: true },
